@@ -1,0 +1,46 @@
+name: Explore Azure with GitHub Action
+
+on:
+  workflow_dispatch
+
+permissions:
+        contents: read
+        id-token: write
+
+jobs:
+  Azure_Environment:
+
+    name: "Azure Environemt"
+    env:
+      AAD_CLIENT_ID: ${{ secrets.ADD_CLIENT_ID }}
+      ADD_CLIENT_SECRET: ${{ secrets.ADD_CLIENT_SECRET }}
+      ADD_SUBSCRIPTION_ID: ${{ secrets.ADD_SUBSCRIPTION_ID }}
+      ADD_TENANT_ID: ${{ secrets.ADD_TENANT_ID }}
+
+    runs-on: ubuntu-22.04
+    environment: development
+
+    steps:
+    - name: 'Install Kubectl'
+      uses: azure/setup-kubectl@v3
+      with:
+        version: 'v1.30.2' # default is latest stable #azure aks
+
+    - name: 'Az CLI Login with Service Principal'
+      #run: |
+      #  az login --service-principal -u ${{ secrets.AAD_CLIENT_ID }} -p ${{ secrets.AAD_CLIENT_SECRET }} --tenant ${{ secrets.AAD_TENANT_ID }} 
+      #  az account set --subscription ${{ secrets.AAD_SUBSCRIPTION_ID }}
+      uses: azure/login@v2
+      with:
+      #  client-id: ${{ secrets.ADD_CLIENT_ID }}
+      #  tenant-id: ${{ secrets.ADD_TENANT_ID }}
+      #  subscription-id: ${{ secrets.ADD_SUBSCRIPTION_ID }}
+      #
+        creds: ${{ secrets.ADD_AZURE_CREDENTIALS }}
+
+    - name: 'Azure CLI script'
+      uses: azure/cli@v2
+      with:
+        azcliversion: latest
+        inlineScript: |
+          az account show
