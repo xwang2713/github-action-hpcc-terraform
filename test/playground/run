@@ -1,0 +1,20 @@
+#!/bin/bash
+#./ecl-test setup --excludeclass=3rdparty,embedded,spray --pq=10 --server 34.66.125.65
+
+#./ecl-test setup --excludeclass=3rdparty,embedded,spray --pq=10 --server a95fcae1419214aa98d44d43b6b5a43d-1580568255.us-east-1.elb.amazonaws.com
+
+
+# hpcc-dev-160
+#server=a4375fcb07d314446b3036e4a5a3ded0-867327524.us-east-1.elb.amazonaws.com
+
+#eks-hpcc-1
+
+# eks-hpcc-1
+#server=ab619426a27cf48cc8295221b53958ba-716284310.us-east-1.elb.amazonaws.com
+server=10.224.20.58
+
+#server=localhost
+
+
+#ecl run thor -s ${server}  <ecl file path>
+./test-playground.sh -d ./HPCC-Platform -s $server -t "hthor roxie thor" | tee -a ubuntu-24.04.out

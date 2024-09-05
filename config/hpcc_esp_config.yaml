@@ -1,0 +1,16 @@
+esp:
+- name: eclwatch
+  application: eclwatch
+  auth: none
+  replicas: 1
+  service:
+    port: 8888
+    servicePort: 8010
+    visibility: global
+- name: eclqueries
+  application: eclqueries
+  auth: none
+  replicas: 1
+  service:
+    visibility: global
+    servicePort: 8002

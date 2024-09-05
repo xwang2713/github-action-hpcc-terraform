@@ -12,8 +12,14 @@ jobs:
 
     name: "Azure Environemt"
     env:
-      AZ_RESOURCE_GROUP: ming-aks-github-action-test
-      AKS_NAME: ming-ask-github-action-test 
+      AZ_RESOURCE_GROUP: ming-rg-github-action-test
+      AKS_NAME: ming-aks-github-action-test
+      HELM_STORAGE_APP_NAME: azstorage
+      HELM_HPCC_CLUSTER_NAME: ghhpcccluster
+      HPCC_STORAGE_OUTPUT: hpcc_storage_output.txt
+      HPCC_STORAGE_INPUT_YAML: hpcc_storage_input.yaml 
+      HPCC_ESP_CONFIG: hpcc_esp_config.yaml
+      HPCC_VERSION: 9.8.18
 
     runs-on: ubuntu-22.04
     environment: development
@@ -49,7 +55,8 @@ jobs:
         kubelogin-version: 'v0.1.3'
         skip-cache: 'true'
 
-    - uses: azure/setup-helm@v4.2.0
+    - name: Install helm 
+      uses: azure/setup-helm@v4.2.0
       with:
         version: 'latest' # default is latest (stable)
 
@@ -60,12 +67,37 @@ jobs:
 
     - name: 'Start the AKS'
       run: |
-        az aks start --name $AKS_NAME --resource-group $AZ_RESOURCE_GROUP
+        kubectl get node > /dev/null 2&>1; rc=$? || true
+        [ $rc -ne 0 ] && az aks start --name $AKS_NAME --resource-group $AZ_RESOURCE_GROUP || true
         kubectl get nodes
+
+    - name: 'Prepare HPCC Systems Helm Repo'
+      run: |
+        helm repo add hpcc https://hpcc-systems.github.io/helm-chart/
+        helm repo update 
+
+    - name: 'Clear previous HPCC Systems Deployment'
+      run: |
+        helm uninstall $HELM_HPCC_CLUSTER_NAME
+        helm uninstall $HELM_STORAGE_APP_NAME
+        sleep 10
+        kubectl delete pvc --all
+        kubectl delete pv --all
+        kubectl delete pod --all
+        kubectl delete service --all # kubernetes service will be restarted automatically
+
+    - name: 'Install HPCC Platform Storage'
+      run: |
+        helm install $HELM_STORAGE_APP_NAME hpcc/hpcc-azurefile > $HPCC_STORAGE_OUTPUT 
+        echo "storage:" > $HPCC_STORAGE_INPUT_YAML
+        cat $HPCC_STORAGE_OUTPUT | sed '1,/^storage:/d' >> $HPCC_STORAGE_INPUT_YAML
+     
 
     - name: 'Install HPCC Platform Cluster'
       run: |
         echo "Deploy HPCC Platform Cluster" 
+        helm install $HELM_HPCC_CLUSTER_NAME hpcc/hpcc --version=$HPCC_VERSION -f ${{ github.workspace }}/config/$HPCC_ESP_CONFIG -f ./$HPCC_STORAGE_INPUT_YAML
+        kubectl get pod -w # will set a timeout in chance deploy failed and hang
 
     - name: 'Stop the AKS'
       run: |
