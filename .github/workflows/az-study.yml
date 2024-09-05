@@ -25,6 +25,9 @@ jobs:
     environment: development
 
     steps:
+    - name: 'Checkout current repo' 
+      uses: actions/checkout@v2
+
     - name: 'Install Kubectl'
       uses: azure/setup-kubectl@v3
       with:
@@ -67,8 +70,9 @@ jobs:
 
     - name: 'Start the AKS'
       run: |
-        #kubectl get node > /dev/null 2&>1; rc=$? || true
-        #[ $rc -ne 0 ] && az aks start --name $AKS_NAME --resource-group $AZ_RESOURCE_GROUP || true
+        set +e
+        kubectl get node > /dev/null 2&>1
+        [ $? -ne 0 ] && az aks start --name $AKS_NAME --resource-group $AZ_RESOURCE_GROUP 
         az aks start --name $AKS_NAME --resource-group $AZ_RESOURCE_GROUP 
         kubectl get nodes
 
@@ -76,6 +80,18 @@ jobs:
       run: |
         helm repo add hpcc https://hpcc-systems.github.io/helm-chart/
         helm repo update 
+
+
+    - name: 'Clear HPCC Systems Deployment'
+      run: |
+        set +e
+        helm uninstall $HELM_HPCC_CLUSTER_NAME
+        helm uninstall $HELM_STORAGE_APP_NAME
+        sleep 10
+        kubectl delete pvc --all
+        kubectl delete pv --all
+        kubectl delete pod --all
+        kubectl delete service --all # kubernetes service will be restarted automatically
 
 
     - name: 'Install HPCC Platform Storage'
@@ -89,17 +105,34 @@ jobs:
       run: |
         echo "Deploy HPCC Platform Cluster" 
         helm install $HELM_HPCC_CLUSTER_NAME hpcc/hpcc --version=$HPCC_VERSION -f ${{ github.workspace }}/config/$HPCC_ESP_CONFIG -f ./$HPCC_STORAGE_INPUT_YAML
-        kubectl get pod -w # will set a timeout in chance deploy failed and hang
+        kubectl wait --for=condition=ready --timeout=180s pod --all
+        kubectl get pod 
 
+    - name : 'Get EclWatch IP'
+      run: |
+        eclwatch_ip=$(kubectl get svc --field-selector metadata.name=eclwatch | awk 'NR==2 {print $4}')
+        echo "ECLWATCH_IP=${eclwatch_ip}" >> $GITHUB_ENV
+        echo "ECLWATCH_IP: ${{ env.ECLWATCH_IP }}"
+
+    - name: Change test directory permission
+      run: |
+        echo "github.workspace: ${{ github.workspace }} "
+        chmod 777 ${{ github.workspace }}/test/ecl/basic
+
+    - name: Run ECL Test
+      uses: addnab/docker-run-action@v3
+      with:
+        image: hpccsystems/platform-core:latest
+        options: --rm -v ${{ github.workspace }}/test/ecl/basic:/basic-test
+        run: |
+          /basic-test/run.sh ${{ env.ECLWATCH_IP }}
+        
     - name: 'Clear HPCC Systems Deployment'
       run: |
+        set +e
         helm uninstall $HELM_HPCC_CLUSTER_NAME
         helm uninstall $HELM_STORAGE_APP_NAME
         sleep 10
-        #kubectl delete pvc --all
-        #kubectl delete pv --all
-        #kubectl delete pod --all
-        #kubectl delete service --all # kubernetes service will be restarted automatically
 
     - name: 'Stop the AKS'
       run: |
