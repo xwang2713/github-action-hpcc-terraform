@@ -51,8 +51,8 @@ jobs:
 
     - name: 'Start the AKS'
       run: |
-              #kubectl get node > /dev/null 2&>1; rc=$? || true
-              #[ $rc -ne 0 ] && az aks start --name $AKS_NAME --resource-group $AZ_RESOURCE_GROUP || true
+        #kubectl get node > /dev/null 2&>1; rc=$? || true
+        #[ $rc -ne 0 ] && az aks start --name $AKS_NAME --resource-group $AZ_RESOURCE_GROUP || true
         az aks start --name $AKS_NAME --resource-group $AZ_RESOURCE_GROUP 
         kubectl get nodes
 

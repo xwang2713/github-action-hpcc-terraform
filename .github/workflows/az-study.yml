@@ -67,8 +67,9 @@ jobs:
 
     - name: 'Start the AKS'
       run: |
-        kubectl get node > /dev/null 2&>1; rc=$? || true
-        [ $rc -ne 0 ] && az aks start --name $AKS_NAME --resource-group $AZ_RESOURCE_GROUP || true
+        #kubectl get node > /dev/null 2&>1; rc=$? || true
+        #[ $rc -ne 0 ] && az aks start --name $AKS_NAME --resource-group $AZ_RESOURCE_GROUP || true
+        az aks start --name $AKS_NAME --resource-group $AZ_RESOURCE_GROUP 
         kubectl get nodes
 
     - name: 'Prepare HPCC Systems Helm Repo'
@@ -76,15 +77,6 @@ jobs:
         helm repo add hpcc https://hpcc-systems.github.io/helm-chart/
         helm repo update 
 
-    - name: 'Clear previous HPCC Systems Deployment'
-      run: |
-        helm uninstall $HELM_HPCC_CLUSTER_NAME
-        helm uninstall $HELM_STORAGE_APP_NAME
-        sleep 10
-        kubectl delete pvc --all
-        kubectl delete pv --all
-        kubectl delete pod --all
-        kubectl delete service --all # kubernetes service will be restarted automatically
 
     - name: 'Install HPCC Platform Storage'
       run: |
@@ -98,6 +90,16 @@ jobs:
         echo "Deploy HPCC Platform Cluster" 
         helm install $HELM_HPCC_CLUSTER_NAME hpcc/hpcc --version=$HPCC_VERSION -f ${{ github.workspace }}/config/$HPCC_ESP_CONFIG -f ./$HPCC_STORAGE_INPUT_YAML
         kubectl get pod -w # will set a timeout in chance deploy failed and hang
+
+    - name: 'Clear HPCC Systems Deployment'
+      run: |
+        helm uninstall $HELM_HPCC_CLUSTER_NAME
+        helm uninstall $HELM_STORAGE_APP_NAME
+        sleep 10
+        #kubectl delete pvc --all
+        #kubectl delete pv --all
+        #kubectl delete pod --all
+        #kubectl delete service --all # kubernetes service will be restarted automatically
 
     - name: 'Stop the AKS'
       run: |
