@@ -20,6 +20,8 @@ jobs:
       HPCC_STORAGE_INPUT_YAML: hpcc_storage_input.yaml 
       HPCC_ESP_CONFIG: hpcc_esp_config.yaml
       HPCC_VERSION: 9.8.18
+      HPCC_SRC_BRANCH: community_9.8.18-1
+      HPCC_SRC_ACCOUNT: hpcc-systems
 
     runs-on: ubuntu-22.04
     environment: development
@@ -119,14 +121,30 @@ jobs:
         echo "github.workspace: ${{ github.workspace }} "
         chmod 777 ${{ github.workspace }}/test/ecl/basic
 
-    - name: Run ECL Test
+    - name: Run A Simple ECL Test
       uses: addnab/docker-run-action@v3
       with:
-        image: hpccsystems/platform-core:latest
+        image: hpccsystems/platform-core:${{ env.HPCC_VERSION }}
         options: --rm -v ${{ github.workspace }}/test/ecl/basic:/basic-test
         run: |
           /basic-test/run.sh ${{ env.ECLWATCH_IP }}
-        
+
+    - name: Checkout HPCC-Platform
+      uses: actions/checkout@v3
+      with:
+        repository: ${{ env.HPCC_SRC_ACCOUNT }}/HPCC-Platform
+        ref: ${{ env.HPCC_SRC_BRANCH }}
+        submodules: recursive
+        path: ${{ github.workspace }}/HPCC-Platform
+
+    - name: Test Playground ECLs with HPCC Systems Source
+      uses: addnab/docker-run-action@v3
+      with:
+        image: hpccsystems/platform-core:${{ env.HPCC_VERSION }}
+        options: --rm -v ${{ github.workspace }}/HPCC-Platform:/HPCC-Platform -v ${{ github.workspace }}/test/playground:/playground
+        run: |
+          /playground/run ${{ env.ECLWATCH_IP }} /HPCC-Platform
+
     - name: 'Clear HPCC Systems Deployment'
       run: |
         set +e

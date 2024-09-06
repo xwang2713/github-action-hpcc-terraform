@@ -1,4 +1,5 @@
 #!/bin/bash
+SCRIPT_DIR=$(dirname $0)
 #./ecl-test setup --excludeclass=3rdparty,embedded,spray --pq=10 --server 34.66.125.65
 
 #./ecl-test setup --excludeclass=3rdparty,embedded,spray --pq=10 --server a95fcae1419214aa98d44d43b6b5a43d-1580568255.us-east-1.elb.amazonaws.com
@@ -11,10 +12,14 @@
 
 # eks-hpcc-1
 #server=ab619426a27cf48cc8295221b53958ba-716284310.us-east-1.elb.amazonaws.com
-server=10.224.20.58
+server=
+[ -n "$1" ] && server=$1
+
+SRC_DIR=./HPCC-Platform
+[ -n "$2" ] && SRC_DIR=$2
 
 #server=localhost
 
 
 #ecl run thor -s ${server}  <ecl file path>
-./test-playground.sh -d ./HPCC-Platform -s $server -t "hthor roxie thor" | tee -a ubuntu-24.04.out
+${SCRIPT_DIR}/test-playground.sh -d $SRC_DIR -s $server -t "hthor roxie thor" | tee -a test.out
