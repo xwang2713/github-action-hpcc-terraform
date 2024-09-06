@@ -22,4 +22,5 @@ SRC_DIR=./HPCC-Platform
 
 
 #ecl run thor -s ${server}  <ecl file path>
-${SCRIPT_DIR}/test-playground.sh -d $SRC_DIR -s $server -t "hthor roxie thor" | tee -a test.out
+#${SCRIPT_DIR}/test-playground.sh -d $SRC_DIR -s $server -t "hthor roxie thor" | tee -a test.out
+${SCRIPT_DIR}/test-playground.sh -d $SRC_DIR -s $server -t "hthor thor" | tee -a test.out
