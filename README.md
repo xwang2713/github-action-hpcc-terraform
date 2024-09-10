@@ -54,6 +54,31 @@ The current steps include:
 9. Stop AKS
 
 
+## How to trigger a workflow
+
+https://stackoverflow.com/questions/77354529/how-can-i-trigger-a-github-actions-workflow-from-another-github-actions-workflow
+
+
+https://stackoverflow.com/questions/62736315/invoke-github-actions-workflow-manually-and-pass-parameters
+
+
+An example is given in trigger.yml which uses curl to post a request.
+
+Another method is to use previous workflow complete:
+```code
+on:
+  workflow_run:
+    workflows: ["CI build"]
+    types:
+      - completed
+```
+
+## Access Opinionated Cluster 
+After add configuration with AKS name and Resource group local AZ Cli can stop/start the AKS but can't run kubectl commands such as 'kubectl get <nodes|pods>'
+
+Even kubelogin with token successful still can run kubectl. Need investigate
+ 
+
 ## To Do 
 
 1. Test through opinionated HPCC Terraform Cluster. Current test is based on manual created AKS from Azure Portal
