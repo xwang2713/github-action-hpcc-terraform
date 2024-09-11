@@ -59,8 +59,8 @@ jobs:
 
     - name: Kubelogin configuration
       run: |
-         export KUBECONFIG=~/.kube/config
-         kubelogin convert-kubeconfig -l spn --client-id ${{ secrets.AAD_CLIENT_ID }} --client-secret ${{ secrets.AAD_CLIENT_SECRET }}
+        export KUBECONFIG=~/.kube/config
+        kubelogin convert-kubeconfig -l spn --client-id ${{ secrets.AAD_CLIENT_ID }} --client-secret ${{ secrets.AAD_CLIENT_SECRET }}
     #    kubectl get nodes
 
     - name: 'Start the AKS'
@@ -68,6 +68,13 @@ jobs:
         set +e
         kubectl get node > /dev/null 2&>1
         [ $? -ne 0 ] && echo "AKS seems stopped. Start it..." && az aks start --name $AKS_NAME --resource-group $AZ_RESOURCE_GROUP
+        #az aks wait --name $AKS_NAME --resource-group $AZ_RESOURCE_GROUP \
+        #  --custom instanceView.statuses[?code=='PowerState/running'] --timeout 120
+        # Above wait doesn't work
+        # ERROR: Invalid jmespath query supplied for `--query`: Unknown token /
+        # To learn more about --query, please visit: 'https://docs.microsoft.com/cli/azure/query-azure-cli'
+        # Use slepp for now
+        sleep 10
         kubectl get nodes
 
     - name: 'Stop the AKS'
