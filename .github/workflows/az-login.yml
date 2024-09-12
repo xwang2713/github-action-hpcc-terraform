@@ -14,8 +14,8 @@ jobs:
     env:
       #AZ_RESOURCE_GROUP: ming-rg-github-action-test
       #AKS_NAME: ming-aks-github-action-test
-      AZ_RESOURCE_GROUP: app-bctest-sandbox-eastus-91682
-      AKS_NAME: tf-galj-default-aks-1
+      AZ_RESOURCE_GROUP: app-bctest-sandbox-eastus-61217
+      AKS_NAME: tf-zyln-default-aks-1
 
     runs-on: ubuntu-22.04
     environment: development
