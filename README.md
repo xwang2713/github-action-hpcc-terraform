@@ -78,9 +78,53 @@ After add configuration with AKS name and Resource group local AZ Cli can stop/s
 
 Even kubelogin with token successful still can run kubectl. Need investigate
  
+It is resolved after adding following:
+```code
+export KUBECONFIG=~/.kube/config
+kubelogin convert-kubeconfig -l spn --client-id ${{ secrets.AAD_CLIENT_ID }} --client-secret ${{ secrets.AAD_CLIENT_SECRET }}
+```
+Also at AKS side add "<user>=<Service Principal Object ID>"
+Currently two users added: 1) Github App name 2) Github Action runner user: "runner". I think 2) make effect but need to confirm 
+
 
 ## To Do 
 
-1. Test through opinionated HPCC Terraform Cluster. Current test is based on manual created AKS from Azure Portal
-2. More type of tests
-3. Cost export
+### Organize the Github Action repo
+It is currently under Github account xwang2713 (ming)
+We should move it to hpcc-systems
+
+How should we trigger Github Action Test after build? What is Github user used to run HPCC Build.
+Trigger a GitHub Action Workflow in another Github Account need that account's token
+
+
+
+### How do we want to log the test results
+1. Saved in release
+2. Saved in Github Action Archive
+
+
+### More type of tests
+BVT list
+
+### All test should be run through local command-line environment 
+It will help to debug and investigate, etc
+Only ECLWatch IP is needed for most case
+
+### Cost export
+Can't see all cost from the resource group for opinionated cluster
+
+
+### Refactor the Github Action Code
+Do we want to 
+
+### Error Handling
+#### Download HPCC-Platform Docker image failure
+I experience one time of this failure for "Simple ECL Test". 
+
+#### Node not available
+ Warning  FailedScheduling  106s  default-scheduler   0/2 nodes are available: 2 node(s) had untolerated taint {CriticalAddonsOnly: true}. preemption: 0/2 nodes are available: 2 Preemption is not helpful for scheduling.
+  Normal   TriggeredScaleUp  99s   cluster-autoscaler  pod triggered scale-up: [{aks-thorpool2-13421744-vmss 0->1 (max: 1)}]
+
+
+Do we use spot instances?
+

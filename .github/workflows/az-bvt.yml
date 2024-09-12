@@ -83,7 +83,7 @@ jobs:
         az account set --subscription ${{ secrets.AAD_SUBSCRIPTION_ID }}
         az aks get-credentials --name $AKS_NAME --resource-group $AZ_RESOURCE_GROUP --overwrite-existing
 
-    - name: Kubelogin configuration
+    - name: 'Kubelogin configuration'
       run: |
         export KUBECONFIG=~/.kube/config
         kubelogin convert-kubeconfig -l spn --client-id ${{ secrets.AAD_CLIENT_ID }} --client-secret ${{ secrets.AAD_CLIENT_SECRET }}
