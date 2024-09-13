@@ -93,7 +93,7 @@ jobs:
         set +e
         kubectl get node > /dev/null 2&>1
         [ $? -ne 0 ] && az aks start --name $AKS_NAME --resource-group $AZ_RESOURCE_GROUP 
-        sleep 10
+        sleep 15
         kubectl get nodes
 
     - name: 'Prepare HPCC Systems Helm Repo'
@@ -142,6 +142,7 @@ jobs:
       run: |
         echo "github.workspace: ${{ github.workspace }} "
         chmod 777 ${{ github.workspace }}/test/ecl/basic
+        chmod 777 ${{ github.workspace }}/test/playground
 
     - name: Run A Simple ECL Test
       uses: addnab/docker-run-action@v3
@@ -166,6 +167,14 @@ jobs:
         options: --rm -v ${{ github.workspace }}/HPCC-Platform:/HPCC-Platform -v ${{ github.workspace }}/test/playground:/playground
         run: |
           /playground/run ${{ env.ECLWATCH_IP }} /HPCC-Platform
+
+    - name: Upload Artifacts BVT Test
+      uses: actions/upload-artifact@v4
+      with:
+        name: HPCC-${{ github.event.inputs.hpccVersion }}-BVT-Result
+        path: |
+          ${{ github.workspace }}/test/playground/playground.out
+        compression-level: 0
 
     - name: 'Clear HPCC Systems Deployment'
       run: |
