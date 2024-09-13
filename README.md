@@ -115,7 +115,9 @@ Can't see all cost from the resource group for opinionated cluster
 
 
 ### Refactor the Github Action Code
-Do we want to 
+Need add more input parameters such AKS name and resource group name
+
+Break down the code to several Github Action YAML files for easy re-use and complete the each steps even some failed in the middle 
 
 ### Error Handling
 #### Download HPCC-Platform Docker image failure
