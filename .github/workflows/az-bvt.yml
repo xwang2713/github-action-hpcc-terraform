@@ -78,6 +78,7 @@ jobs:
       with:
         version: 'latest' # default is latest (stable)
 
+
     - name: 'Setup the AKS Environment'
       run: |
         az account set --subscription ${{ secrets.AAD_SUBSCRIPTION_ID }}
