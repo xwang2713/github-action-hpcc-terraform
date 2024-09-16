@@ -76,6 +76,8 @@ jobs:
         # Use slepp for now
         sleep 10
         kubectl get nodes
+        # Work around
+        [ $? -ne 0 ] && ( sleep 15 && kubectl get node ) || true
 
     - name: 'Stop the AKS'
       run: |

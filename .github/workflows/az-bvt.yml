@@ -96,6 +96,9 @@ jobs:
         [ $? -ne 0 ] && az aks start --name $AKS_NAME --resource-group $AZ_RESOURCE_GROUP 
         sleep 15
         kubectl get nodes
+        # Work around kubectl nodes not ready
+        [ $? -ne 0 ] && ( sleep 15 && kubectl get nodes ) || true
+        
 
     - name: 'Prepare HPCC Systems Helm Repo'
       run: |
