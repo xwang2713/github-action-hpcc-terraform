@@ -144,6 +144,7 @@ jobs:
         echo "github.workspace: ${{ github.workspace }} "
         chmod 777 ${{ github.workspace }}/test/ecl/basic
         chmod 777 ${{ github.workspace }}/test/playground
+        sudo apt install -y bc
 
     - name: Run A Simple ECL Test
       uses: addnab/docker-run-action@v3
