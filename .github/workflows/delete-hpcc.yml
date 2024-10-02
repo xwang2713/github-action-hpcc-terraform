@@ -1,0 +1,93 @@
+name: Delete HPCC Cluster on AKS
+
+on:
+  workflow_dispatch:
+
+permissions:
+        contents: read
+        id-token: write
+
+jobs:
+  Azure_Environment:
+
+    name: "Azure Environemt"
+    env:
+      AZ_RESOURCE_GROUP: app-bctest-sandbox-eastus-61217
+      AKS_NAME: tf-zyln-default-aks-1
+      #AZ_RESOURCE_GROUP: ming-rg-github-action-test
+      #AKS_NAME: ming-aks-github-action-test
+      HELM_STORAGE_APP_NAME: azstorage
+      HELM_HPCC_CLUSTER_NAME: ghhpcccluster
+
+    runs-on: ubuntu-22.04
+    environment: development
+
+    steps:
+    - name: 'Checkout current repo' 
+      uses: actions/checkout@v2
+
+    - name: 'Install Kubectl'
+      uses: azure/setup-kubectl@v3
+      with:
+        version: 'v1.30.2' # default is latest stable #azure aks
+
+    - name: 'Az CLI Login with Service Principal'
+      #run: |
+      #  az login --service-principal -u ${{ secrets.AAD_CLIENT_ID }} -p ${{ secrets.AAD_CLIENT_SECRET }} --tenant ${{ secrets.AAD_TENANT_ID }} 
+      #  az account set --subscription ${{ secrets.AAD_SUBSCRIPTION_ID }}
+      uses: azure/login@v2
+      with:
+      #  client-id: ${{ secrets.ADD_CLIENT_ID }}
+      #  tenant-id: ${{ secrets.ADD_TENANT_ID }}
+      #  subscription-id: ${{ secrets.ADD_SUBSCRIPTION_ID }}
+      #
+        creds: ${{ secrets.ADD_AZURE_CREDENTIALS }}
+
+    - name: 'Azure CLI script'
+      uses: azure/cli@v2
+      with:
+        azcliversion: latest
+        inlineScript: |
+          az account show
+ 
+    - name: Install kubelogin
+      uses: azure/use-kubelogin@v1
+      with:
+        kubelogin-version: 'v0.1.3'
+        skip-cache: 'true'
+
+    - name: Install helm 
+      uses: azure/setup-helm@v4.2.0
+      with:
+        version: 'latest' # default is latest (stable)
+
+
+    - name: 'Setup the AKS Environment'
+      run: |
+        az account set --subscription ${{ secrets.AAD_SUBSCRIPTION_ID }}
+        az aks get-credentials --name $AKS_NAME --resource-group $AZ_RESOURCE_GROUP --overwrite-existing
+
+    - name: 'Kubelogin configuration'
+      run: |
+        export KUBECONFIG=~/.kube/config
+        kubelogin convert-kubeconfig -l spn --client-id ${{ secrets.AAD_CLIENT_ID }} --client-secret ${{ secrets.AAD_CLIENT_SECRET }}
+
+
+    - name: 'Clear HPCC Systems Deployment'
+      run: |
+        set +e
+        helm list | grep $HELM_HPCC_CLUSTER_NAME > /dev/null 2>&1
+        if [ $? eq 0 ]
+        then
+           helm uninstall $HELM_HPCC_CLUSTER_NAME
+           helm uninstall $HELM_STORAGE_APP_NAME
+           #kubectl delete pvc --all
+           #kubectl delete pv --all
+           sleep 120
+        #kubectl delete pod --all
+        #kubectl delete service --all # kubernetes service will be restarted automatically
+        fi
+
+    - name: 'Stop the AKS'
+      run: |
+        az aks stop --name $AKS_NAME --resource-group $AZ_RESOURCE_GROUP
