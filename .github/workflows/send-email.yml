@@ -1,0 +1,53 @@
+name: Send Email
+
+on:
+  workflow_dispatch
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  Send-email:
+
+    name: "Send email"
+    env:
+      GITHUB_ORG: xwang2713
+      GITHUB_REPO: github-action-hpcc-terraform
+      GITHUB_REPO_BRANCH: main
+      WF_YAML_FILE: az-bvt.yml
+
+    runs-on: Ubuntu-22.04
+    steps:
+    - name: 'Test send email'
+      run: |
+        cat << EOF > bvt.out
+        ECL Setup
+
+        Playground
+        EOF
+
+    - name: Send email
+      uses: dawidd6/action-send-mail@v3
+      with:
+        server_address: smtp.gmail.com
+        # Server port, default 25:
+        server_port: 465
+        secure: true
+        # Optional (recommended) mail server username:
+        #username: ${{secrets.MAIL_USERNAME}}
+        # Optional (recommended) mail server password:
+        #password: ${{secrets.MAIL_PASSWORD}}
+        subject: Github Actions BVT result
+        to: xiaoming.wang@lexisnexisrisk.com
+        from: xwang2713@gmail.com
+        html_body: file://bvt.out
+        #cc:
+        #bcc:
+        ignore_cert: true
+        #convert_markdown: true
+        #attachments: attachments.zip,git.diff,./dist/static/*.js
+        priority: low
+        #nodemailerlog: false
+        #nodemailerdebug: false
+
