@@ -110,7 +110,7 @@ jobs:
       run: |
         set +e
         helm list | grep $HELM_HPCC_CLUSTER_NAME > /dev/null 2>&1
-        if [ $? eq 0 ]
+        if [ $? -eq 0 ]
         then
            helm uninstall $HELM_HPCC_CLUSTER_NAME
            helm uninstall $HELM_STORAGE_APP_NAME
