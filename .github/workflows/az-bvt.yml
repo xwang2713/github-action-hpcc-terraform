@@ -151,6 +151,7 @@ jobs:
     - name: Change test directory permission
       run: |
         echo "github.workspace: ${{ github.workspace }} "
+        chmod 777 ${{ github.workspace }}/test
         chmod 777 ${{ github.workspace }}/test/ecl/basic
         chmod 777 ${{ github.workspace }}/test/playground
 
@@ -170,15 +171,6 @@ jobs:
         submodules: recursive
         path: ${{ github.workspace }}/HPCC-Platform
 
-    - name: Test Regression HPCC Systems Source
-      uses: addnab/docker-run-action@v3
-      with:
-        image: hpccsystems/platform-core:${{ github.event.inputs.hpccVersion }}
-        options: --rm -v ${{ github.workspace }}/HPCC-Platform:/HPCC-Platform 
-        run: |
-          cd /HPCC-Platform/testing/regress 
-          ./ecl-test setup --server ${{ env.ECLWATCH_IP }} --config ecl-test-azure.json | tee ${{ github.workspace }}/test/bvt.out
-
     - name: Test Playground ECLs with HPCC Systems Source
       uses: addnab/docker-run-action@v3
       with:
@@ -186,7 +178,25 @@ jobs:
         options: --rm -v ${{ github.workspace }}/HPCC-Platform:/HPCC-Platform -v ${{ github.workspace }}/test/playground:/playground
         run: |
           /playground/run ${{ env.ECLWATCH_IP }} /HPCC-Platform
-          cat ${{ github.workspace }}/test/playground/playground.out >> ${{ github.workspace }}/test/bvt.out
+
+    - name: Test Regression HPCC Systems Source
+      uses: addnab/docker-run-action@v3
+      with:
+        image: hpccsystems/platform-core:${{ github.event.inputs.hpccVersion }}
+        options: --rm -v ${{ github.workspace }}/HPCC-Platform:/HPCC-Platform -v ${{ github.workspace }}/test:/test
+        run: |
+          cd /HPCC-Platform/testing/regress 
+          ./ecl-test setup --server ${{ env.ECLWATCH_IP }} --config ecl-test-azure.json  2>&1 | tee /test/playground/regress.out
+
+    - name: Collect Test Results
+      run: |
+        echo "Build Verification Test ${{ github.event.inputs.hpccVersion }}"  > ${{ github.workspace }}/test/bvt.out
+        cat ${{ github.workspace }}/test/playground/playground.out >> ${{ github.workspace }}/test/bvt.out
+        echo ""  >> ${{ github.workspace }}/test/bvt.out
+        echo ""  >> ${{ github.workspace }}/test/bvt.out
+        echo "Regression Test"  >> ${{ github.workspace }}/test/bvt.out
+        echo "---------------------------------------------------------"  >> ${{ github.workspace }}/test/bvt.out
+        cat ${{ github.workspace }}/test/playground/regress.out >> ${{ github.workspace }}/test/bvt.out
 
     - name: Upload Artifacts BVT Test
       uses: actions/upload-artifact@v4
