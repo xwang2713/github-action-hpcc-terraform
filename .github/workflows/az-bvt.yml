@@ -206,6 +206,24 @@ jobs:
           ${{ github.workspace }}/test/bvt.out
         compression-level: 0
 
+
+    # Will load test result to HPCC-Platform replease
+    # If no release or no tag nothing will happens
+    # Ignore errors either no rleease or validation error (code:invalid)
+    - name: "Upload result file to the repo release"
+      continue-on-error: true
+      uses: xresloader/upload-to-github-release@main
+      #env:
+      #  GITHUB_TOKEN: ${{ secrets.MING_GITHUB_TOKEN }}
+      with:
+        file: ${{ github.workspace }}/test/bvt.out
+        tag_name: ${{ github.event.inputs.hpccSrcBranch }}
+        overwrite: true
+        tags: true
+        target_owner: ${{ github.event.inputs.hpccSrcAccount }}
+        target_repo: HPCC-Platform
+        token: ${{ secrets.MING_GITHUB_TOKEN }}
+
     - name: 'Clear HPCC Systems Deployment'
       run: |
         set +e

@@ -100,6 +100,7 @@ Trigger a GitHub Action Workflow in another Github Account need that account's t
 
 ### How do we want to log the test results
 1. Saved in release
+   https://github.com/marketplace/actions/upload-to-github-release
 2. Saved in Github Action Archive
 
 

@@ -1,0 +1,38 @@
+name: Upload Test Result to a Repo release
+
+on:
+  workflow_dispatch
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  upload-result:
+
+    name: "Upload Result"
+    env:
+      GITHUB_ORG: xwang2713
+      GITHUB_REPO: HPCC-Platform
+      RESULT_FILE: test.out
+      RELEASE_REF: github-dev-test-1
+
+    runs-on: Ubuntu-22.04
+    steps:
+    - name: 'Create a dummy result file'
+      run: |
+        echo "Test result" >  ${{ env.RESULT_FILE }}
+
+    - name: "Upload result file to the repo release"
+      continue-on-error: true
+      uses: xresloader/upload-to-github-release@main
+      #env:
+      #  GITHUB_TOKEN: ${{ secrets.MING_GITHUB_TOKEN }}
+      with:
+        file: ${{ env.RESULT_FILE }}
+        tag_name: ${{ env.RELEASE_REF }}
+        overwrite: true
+        tags: true
+        target_owner: ${{ env.GITHUB_ORG }}
+        target_repo: ${{ env.GITHUB_REPO }}
+        token: ${{ secrets.MING_GITHUB_TOKEN }}
