@@ -35,6 +35,7 @@ jobs:
       #HPCC_VERSION: 9.8.18
       #HPCC_SRC_BRANCH: community_9.8.18-1
       #HPCC_SRC_ACCOUNT: hpcc-systems
+      BVT_RESULT: BVT.result
 
     runs-on: ubuntu-22.04
     environment: development
@@ -190,20 +191,20 @@ jobs:
 
     - name: Collect Test Results
       run: |
-        echo "Build Verification Test ${{ github.event.inputs.hpccVersion }}"  > ${{ github.workspace }}/test/bvt.out
-        cat ${{ github.workspace }}/test/playground/playground.out >> ${{ github.workspace }}/test/bvt.out
-        echo ""  >> ${{ github.workspace }}/test/bvt.out
-        echo ""  >> ${{ github.workspace }}/test/bvt.out
-        echo "Regression Test"  >> ${{ github.workspace }}/test/bvt.out
-        echo "---------------------------------------------------------"  >> ${{ github.workspace }}/test/bvt.out
-        cat ${{ github.workspace }}/test/playground/regress.out >> ${{ github.workspace }}/test/bvt.out
+        echo "Build Verification Test ${{ github.event.inputs.hpccVersion }}"  > ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
+        cat ${{ github.workspace }}/test/playground/playground.out >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
+        echo ""  >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
+        echo ""  >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
+        echo "Regression Test"  >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
+        echo "---------------------------------------------------------"  >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
+        cat ${{ github.workspace }}/test/playground/regress.out >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
 
     - name: Upload Artifacts BVT Test
       uses: actions/upload-artifact@v4
       with:
         name: HPCC-${{ github.event.inputs.hpccVersion }}-BVT-Result
         path: |
-          ${{ github.workspace }}/test/bvt.out
+          ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
         compression-level: 0
 
 
@@ -216,7 +217,7 @@ jobs:
       #env:
       #  GITHUB_TOKEN: ${{ secrets.MING_GITHUB_TOKEN }}
       with:
-        file: ${{ github.workspace }}/test/bvt.out
+        file: ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
         tag_name: ${{ github.event.inputs.hpccSrcBranch }}
         overwrite: true
         tags: true
