@@ -14,8 +14,17 @@ jobs:
     env:
       #AZ_RESOURCE_GROUP: ming-rg-github-action-test
       #AKS_NAME: ming-aks-github-action-test
-      AZ_RESOURCE_GROUP: app-bctest-sandbox-eastus-61217
-      AKS_NAME: tf-zyln-default-aks-1
+      #AZ_RESOURCE_GROUP: app-bctest-sandbox-eastus-61217
+      #AKS_NAME: tf-zyln-default-aks-1
+      AZ_RESOURCE_GROUP: app-hpcc-platform-dev-eastus-98900 
+      AKS_NAME: dev-aks-1 
+      AZURE_CREDENTIALS:  "${{ secrets.LNSP_AZURE_CREDENTIALS }}"
+      SUBSCRIPTION_ID: "${{ secrets.LNSP_SUBSCRIPTION_ID }}"
+      TENANT_ID:  "${{ secrets.LNSP_TENANT_ID }}" 
+      CLIENT_ID: "${{ secrets.LNSP_CLIENT_ID }}"
+      CLIENT_SECRET: "${{ secrets.LNSP_CLIENT_SECRET }}"
+
+
 
     runs-on: ubuntu-22.04
     environment: development
@@ -36,7 +45,7 @@ jobs:
       #  tenant-id: ${{ secrets.ADD_TENANT_ID }}
       #  subscription-id: ${{ secrets.ADD_SUBSCRIPTION_ID }}
       #
-        creds: ${{ secrets.ADD_AZURE_CREDENTIALS }}
+        creds: ${{ secrets.LNSP_AZURE_CREDENTIALS }}
 
     - name: 'Azure CLI script'
       uses: azure/cli@v2
@@ -54,13 +63,13 @@ jobs:
 
     - name: 'Setup the AKS Environment'
       run: |
-        az account set --subscription ${{ secrets.AAD_SUBSCRIPTION_ID }}
+        az account set --subscription ${{ env.SUBSCRIPTION_ID }}
         az aks get-credentials --name $AKS_NAME --resource-group $AZ_RESOURCE_GROUP --overwrite-existing
 
     - name: Kubelogin configuration
       run: |
         export KUBECONFIG=~/.kube/config
-        kubelogin convert-kubeconfig -l spn --client-id ${{ secrets.AAD_CLIENT_ID }} --client-secret ${{ secrets.AAD_CLIENT_SECRET }}
+        kubelogin convert-kubeconfig -l spn --client-id ${{ env.CLIENT_ID }} --client-secret ${{ env.CLIENT_SECRET }}
     #    kubectl get nodes
 
     - name: 'Start the AKS'
