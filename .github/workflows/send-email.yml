@@ -28,28 +28,27 @@ jobs:
         EOF
 
 
-    - name: Send email
-      run: |
-        sudo apt install wget -y
-        wget https://github.com/hpcc-systems/HPCC-Platform/releases/download/community_9.8.32-rc1/BVT.result
-        sudo apt install mailutils -y
-        cat BVT.result | mail -s "ming test from Github Action" xiaoming.wang@lexisnexisrisk.com
+#   - name: Send email
+#      run: |
+#        sudo apt install wget -y
+#        wget https://github.com/hpcc-systems/HPCC-Platform/releases/download/community_9.8.32-rc1/BVT.result
+#        sudo apt install mailutils -y
+#        cat BVT.result | mail -s "ming test from Github Action" xiaoming.wang@lexisnexisrisk.com
 
-    #- name: Send email
-    #  uses: dawidd6/action-send-mail@v3
-    #  with:
-    #    server_address: smtp.gmail.com
-    #    # Server port, default 25:
-    #    server_port: 465
-    #    secure: true
-    #    # Optional (recommended) mail server username:
-    #    #username: ${{secrets.MAIL_USERNAME}}
+    - name: Send email
+      uses: dawidd6/action-send-mail@v3
+      with:
+        server_address: smtp-mail.outlook.com
+        server_port: 587
+        secure: false
+        # Optional (recommended) mail server username:
+        #username: ${{secrets.MAIL_USERNAME}}
     #    # Optional (recommended) mail server password:
     #    #password: ${{secrets.MAIL_PASSWORD}}
-    #    subject: Github Actions BVT result
-    #    to: xiaoming.wang@lexisnexisrisk.com
-    #    from: xwang2713@gmail.com
-    #    html_body: file://bvt.out
+        subject: Github Actions BVT result
+        to: xiaoming.wang@lexisnexisrisk.com
+        from: builds@hpccsystems.com
+        html_body: file://bvt.out
     #    #cc:
     #    #bcc:
     #    ignore_cert: true
