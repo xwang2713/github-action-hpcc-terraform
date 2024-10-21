@@ -1,0 +1,318 @@
+name: Build Verification Test (BVT) on AKS Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      hpccVersion:
+        description: 'HPCC Platform version to test'
+        required: true
+      hpccSrcBranch:
+        description: 'HPCC Platform source ranch or reference'
+        required: true
+      hpccSrcAccount:
+        description: 'HPCC Platform source github account'
+        required: true
+        default: hpcc-systems
+
+permissions:
+        contents: read
+        id-token: write
+
+jobs:
+  Azure_Environment:
+
+    name: "Azure Environemt"
+    env:
+      AZ_RESOURCE_GROUP: app-bctest-sandbox-eastus-61217
+      AKS_NAME: tf-zyln-default-aks-1
+      #AZ_RESOURCE_GROUP: ming-rg-github-action-test
+      #AKS_NAME: ming-aks-github-action-test
+      AZURE_CREDENTIALS:  "${{ secrets.ADD_AZURE_CREDENTIALS }}"
+      SUBSCRIPTION_ID: "${{ secrets.AAD_SUBSCRIPTION_ID }}"
+      TENANT_ID:  "${{ secrets.AAD_TENANT_ID }}"
+      CLIENT_ID: "${{ secrets.AAD_CLIENT_ID }}"
+      CLIENT_SECRET: "${{ secrets.AAD_CLIENT_SECRET }}"
+      HELM_STORAGE_APP_NAME: azstorage
+      HELM_HPCC_CLUSTER_NAME: ghhpcccluster
+      HPCC_STORAGE_OUTPUT: hpcc_storage_output.txt
+      HPCC_STORAGE_INPUT_YAML: hpcc_storage_input.yaml 
+      HPCC_ESP_CONFIG: hpcc_esp_config.yaml
+      #HPCC_VERSION: 9.8.18
+      #HPCC_SRC_BRANCH: community_9.8.18-1
+      #HPCC_SRC_ACCOUNT: hpcc-systems
+      BVT_RESULT: BVT.result
+
+    runs-on: ubuntu-22.04
+    environment: development
+
+    steps:
+    - name: 'Checkout current repo' 
+      uses: actions/checkout@v2
+
+    - name: 'Install Kubectl'
+      uses: azure/setup-kubectl@v3
+      with:
+        version: 'v1.30.2' # default is latest stable #azure aks
+
+    - name: 'Az CLI Login with Service Principal'
+      #run: |
+      #  az login --service-principal -u ${{ env.CLIENT_ID }} -p ${{ env.CLIENT_SECRET }} --tenant ${{ env.TENANT_ID }} 
+      #  az account set --subscription ${{ env.SUBSCRIPTION_ID }}
+      uses: azure/login@v2
+      with:
+        creds: ${{ env.AZURE_CREDENTIALS }}
+
+    - name: 'Azure CLI script'
+      uses: azure/cli@v2
+      with:
+        azcliversion: latest
+        inlineScript: |
+          az account show
+ 
+    - name: Install kubelogin
+      uses: azure/use-kubelogin@v1
+      with:
+        kubelogin-version: 'v0.1.3'
+        skip-cache: 'true'
+
+    - name: Install helm 
+      uses: azure/setup-helm@v4.2.0
+      with:
+        version: 'latest' # default is latest (stable)
+
+
+    - name: 'Setup the AKS Environment'
+      run: |
+        az account set --subscription ${{ env.SUBSCRIPTION_ID }}
+        az aks get-credentials --name $AKS_NAME --resource-group $AZ_RESOURCE_GROUP --overwrite-existing
+
+    - name: 'Kubelogin configuration'
+      run: |
+        export KUBECONFIG=~/.kube/config
+        kubelogin convert-kubeconfig -l spn --client-id ${{ env.CLIENT_ID }} --client-secret ${{ env.CLIENT_SECRET }}
+
+    - name: 'Start the AKS'
+      run: |
+        set +e
+        kubectl get node > /dev/null 2&>1
+        [ $? -ne 0 ] && az aks start --name $AKS_NAME --resource-group $AZ_RESOURCE_GROUP 
+        sleep 15
+        kubectl get nodes
+        # Work around kubectl nodes not ready
+        [ $? -ne 0 ] && ( sleep 15 && kubectl get nodes ) || true
+        
+
+    - name: 'Prepare HPCC Systems Helm Repo'
+      run: |
+        helm repo add hpcc https://hpcc-systems.github.io/helm-chart/
+        helm repo update 
+
+
+    - name: 'Clear HPCC Systems Deployment'
+      run: |
+        set +e
+        helm list | grep $HELM_HPCC_CLUSTER_NAME > /dev/null 2>&1
+        if [ $? -eq 0 ]
+        then
+           helm uninstall $HELM_HPCC_CLUSTER_NAME
+           helm uninstall $HELM_STORAGE_APP_NAME
+           #kubectl delete pvc --all
+           #kubectl delete pv --all
+           sleep 120
+        #kubectl delete pod --all
+        #kubectl delete service --all # kubernetes service will be restarted automatically
+        fi
+
+
+    - name: 'Install HPCC Platform Storage'
+      run: |
+        helm install $HELM_STORAGE_APP_NAME hpcc/hpcc-azurefile > $HPCC_STORAGE_OUTPUT 
+        echo "storage:" > $HPCC_STORAGE_INPUT_YAML
+        cat $HPCC_STORAGE_OUTPUT | sed '1,/^storage:/d' >> $HPCC_STORAGE_INPUT_YAML
+        kubectl get pv
+        kubectl get pvc
+     
+
+    - name: 'Install HPCC Platform Cluster'
+      run: |
+        set +e
+        echo "Deploy HPCC Platform Cluster" 
+        helm install $HELM_HPCC_CLUSTER_NAME hpcc/hpcc --version=${{ github.event.inputs.hpccVersion }} -f ${{ github.workspace }}/config/$HPCC_ESP_CONFIG -f ./$HPCC_STORAGE_INPUT_YAML
+        kubectl wait --for=condition=ready --timeout=1200s pod --all
+        set -e
+        kubectl get pod 
+        kubectl get svc
+
+    - name : 'Get EclWatch IP'
+      run: |
+        kubectl get svc --field-selector metadata.name=eclwatch | awk 'NR==2 {print $4}'
+        export eclwatch_ip=$(kubectl get svc --field-selector metadata.name=eclwatch | awk 'NR==2 {print $4}')
+        echo "ECLWATCH_IP=${eclwatch_ip}" >> $GITHUB_ENV
+        echo "ECLWATCH_IP: ${{ env.ECLWATCH_IP }}"
+
+    - name: Change test directory permission
+      run: |
+        echo "github.workspace: ${{ github.workspace }} "
+        chmod 777 ${{ github.workspace }}/test
+        chmod 777 ${{ github.workspace }}/test/ecl/basic
+        chmod 777 ${{ github.workspace }}/test/playground
+
+    - name: Run A Simple ECL Test
+      uses: addnab/docker-run-action@v3
+      with:
+        image: hpccsystems/platform-core:${{ github.event.inputs.hpccVersion }}
+        options: --rm -v ${{ github.workspace }}/test/ecl/basic:/basic-test
+        run: |
+          /basic-test/run.sh ${{ env.ECLWATCH_IP }}
+
+    - name: Checkout HPCC-Platform
+      uses: actions/checkout@v3
+      with:
+        repository: ${{ github.event.inputs.hpccSrcAccount }}/HPCC-Platform
+        ref: ${{ github.event.inputs.hpccSrcBranch }}
+        submodules: recursive
+        path: ${{ github.workspace }}/HPCC-Platform
+
+    - name: Test Playground ECLs with HPCC Systems Source
+      uses: addnab/docker-run-action@v3
+      with:
+        image: hpccsystems/platform-core:${{ github.event.inputs.hpccVersion }}
+        options: --rm -v ${{ github.workspace }}/HPCC-Platform:/HPCC-Platform -v ${{ github.workspace }}/test/playground:/playground
+        run: |
+          /playground/run ${{ env.ECLWATCH_IP }} /HPCC-Platform
+
+    - name: Test Regression HPCC Systems Source
+      uses: addnab/docker-run-action@v3
+      with:
+        image: hpccsystems/platform-core:${{ github.event.inputs.hpccVersion }}
+        options: --rm -v ${{ github.workspace }}/HPCC-Platform:/HPCC-Platform -v ${{ github.workspace }}/test:/test
+        run: |
+          cd /HPCC-Platform/testing/regress 
+          ./ecl-test setup --server ${{ env.ECLWATCH_IP }} --config ecl-test-azure.json  2>&1 | tee /test/playground/regress.out
+
+    - name: Parse BVT Result
+      run: |
+        BVT_PLAYGROUND_RESULT_PATH=${{ github.workspace }}/test/playground/playground.out
+        BVT_REGRESS_RESULT_PATH=${{ github.workspace }}/test/playground/regress.out
+
+        playground_total=$(sed -n '/^Summary:/,/Regression Test/{
+          p
+        }' ${BVT_PLAYGROUND_RESULT_PATH} | grep "Total tests" | cut -d':' -f 2 | sed -e 's/^[[:space:]]*//')
+
+        playground_pass=$(sed -n '/^Summary:/,/Regression Test/{
+          p
+        }' ${BVT_PLAYGROUND_RESULT_PATH} | grep "Succeeded" | cut -d':' -f 2 | sed -e 's/^[[:space:]]*//')
+
+        PLAYGROUND_RESULT="${playground_pass}/${playground_total}"
+        echo "Playground test rate: ${PLAYGROUND_RESULT}"
+        echo "PLAYGROUND_RESULT=${PLAYGROUND_RESULT}" >> $GITHUB_ENV
+
+        regress_hthor_pass=$(sed -n '/^[[:space:]]*Result:/,/^[[:space:]]*Log:/{
+          /^[[:space:]]*Result:/ { h; b next }
+          /^[[:space:]]*Log:/ { H; x; /.*setup_hthor.*/p; b next }
+          H
+          :next
+        }' ${BVT_REGRESS_RESULT_PATH} | grep "Passing" | cut -d':' -f 2 | sed -e 's/^[[:space:]]*//')
+
+        regress_hthor_fail=$(sed -n '/^[[:space:]]*Result:/,/^[[:space:]]*Log:/{
+          /^[[:space:]]*Result:/ { h; b next }
+          /^[[:space:]]*Log:/ { H; x; /.*setup_hthor.*/p; b next }
+          H
+          :next
+        }' ${BVT_REGRESS_RESULT_PATH} | grep "Failure:" | cut -d':' -f 2 | sed -e 's/^[[:space:]]*//')
+
+        regress_hthor_total=$(expr $regress_hthor_pass \+ $regress_hthor_fail)
+        echo "regress hthor rate: ${regress_hthor_pass}/${regress_hthor_total}"
+
+        regress_roxie_pass=$(sed -n '/^[[:space:]]*Result:/,/^[[:space:]]*Log:/{
+          /^[[:space:]]*Result:/ { h; b next }
+          /^[[:space:]]*Log:/ { H; x; /.*setup_roxie.*/p; b next }
+          H
+          :next
+        }' ${BVT_REGRESS_RESULT_PATH} | grep "Passing" | cut -d':' -f 2 | sed -e 's/^[[:space:]]*//')
+
+        regress_roxie_fail=$(sed -n '/^[[:space:]]*Result:/,/^[[:space:]]*Log:/{
+          /^[[:space:]]*Result:/ { h; b next }
+          /^[[:space:]]*Log:/ { H; x; /.*setup_roxie.*/p; b next }
+          H
+          :next
+        }' ${BVT_REGRESS_RESULT_PATH} | grep "Failure:" | cut -d':' -f 2 | sed -e 's/^[[:space:]]*//')
+        regress_roxie_total=$(expr $regress_roxie_pass + $regress_roxie_fail)
+        echo "regress roxie rate: ${regress_roxie_pass}/${regress_roxie_total}"
+
+        regress_thor_pass=$(sed -n '/^[[:space:]]*Result:/,/^[[:space:]]*Log:/{
+          /^[[:space:]]*Result:/ { h; b next }
+          /^[[:space:]]*Log:/ { H; x; /.*setup_thor.*/p; b next }
+          H
+          :next
+        }' ${BVT_REGRESS_RESULT_PATH} | grep "Passing" | cut -d':' -f 2 | sed -e 's/^[[:space:]]*//')
+
+        regress_thor_fail=$(sed -n '/^[[:space:]]*Result:/,/^[[:space:]]*Log:/{
+          /^[[:space:]]*Result:/ { h; b next }
+          /^[[:space:]]*Log:/ { H; x; /.*setup_thor.*/p; b next }
+          H
+          :next
+        }' ${BVT_REGRESS_RESULT_PATH} | grep "Failure:" | cut -d':' -f 2 | sed -e 's/^[[:space:]]*//')
+
+        regress_thor_total=$(expr $regress_thor_pass + $regress_thor_fail)
+        echo "regress thor rate: ${regress_thor_pass}/${regress_thor_total}"
+
+        regress_pass=$(expr $regress_hthor_pass + $regress_roxie_pass + $regress_thor_pass)
+        regress_total=$(expr $regress_hthor_total + $regress_roxie_total + $regress_thor_total)
+        export REGRESS_RESULT="${regress_pass}/${regress_total}"
+        echo "regress rate: ${REGRESS_RESULT}"
+        echo "REGRESS_RESULT=${REGRESS_RESULT}" >> $GITHUB_ENV
+
+
+    - name: Collect Test Results
+      run: |
+        echo "Build Verification Test ${{ github.event.inputs.hpccVersion }}"  > ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
+        echo "Summary 1) All playground samples. Success Rate: ${{ env.PLAYGROUND_RESULT }}"  >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
+        echo "        2) Regress Setup. Success Rate: ${{ env.REGRESS_RESULT }}"  >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
+        echo ""  >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
+        cat ${{ github.workspace }}/test/playground/playground.out >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
+        echo ""  >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
+        echo ""  >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
+        echo "Regression Test"  >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
+        echo "---------------------------------------------------------"  >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
+        cat ${{ github.workspace }}/test/playground/regress.out >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
+
+    - name: Upload Artifacts BVT Test
+      uses: actions/upload-artifact@v4
+      with:
+        name: HPCC-${{ github.event.inputs.hpccVersion }}-BVT-Result
+        path: |
+          ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
+        compression-level: 0
+
+
+
+    # Will load test result to HPCC-Platform replease
+    # If no release or no tag nothing will happens
+    # Ignore errors either no rleease or validation error (code:invalid)
+    - name: "Upload result file to the repo release"
+      continue-on-error: true
+      uses: xresloader/upload-to-github-release@main
+      #env:
+      #  GITHUB_TOKEN: ${{ secrets.MING_GITHUB_TOKEN }}
+      with:
+        file: ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
+        tag_name: ${{ github.event.inputs.hpccSrcBranch }}
+        overwrite: true
+        tags: true
+        target_owner: ${{ github.event.inputs.hpccSrcAccount }}
+        target_repo: HPCC-Platform
+        token: ${{ secrets.MING_GITHUB_TOKEN }}
+
+    - name: 'Clear HPCC Systems Deployment'
+      run: |
+        set +e
+        helm uninstall $HELM_HPCC_CLUSTER_NAME
+        helm uninstall $HELM_STORAGE_APP_NAME
+        #kubectl delete pvc --all
+        #kubectl delete pv --all
+        sleep 10
+
+    - name: 'Stop the AKS'
+      run: |
+        az aks stop --name $AKS_NAME --resource-group $AZ_RESOURCE_GROUP

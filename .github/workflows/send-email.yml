@@ -47,7 +47,7 @@ jobs:
     #    #password: ${{secrets.MAIL_PASSWORD}}
         subject: Github Actions BVT result
         to: xiaoming.wang@lexisnexisrisk.com
-        from: builds@hpccsystems.com
+        from: hpcc-test@hpccsystems.com
         html_body: file://bvt.out
     #    #cc:
     #    #bcc:
