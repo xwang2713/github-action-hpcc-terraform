@@ -30,8 +30,10 @@ jobs:
 
     - name: Send email
       run: |
+        sudo apt install wget -y
+        wget https://github.com/hpcc-systems/HPCC-Platform/releases/download/community_9.8.32-rc1/BVT.result
         sudo apt install mailutils -y
-        cat bvt.out | mail -s "ming test from Github Action" xiaoming.wang@lexisnexisrisk.com
+        cat BVT.result | mail -s "ming test from Github Action" xiaoming.wang@lexisnexisrisk.com
 
     #- name: Send email
     #  uses: dawidd6/action-send-mail@v3

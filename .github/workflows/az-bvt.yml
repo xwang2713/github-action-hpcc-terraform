@@ -192,6 +192,8 @@ jobs:
     - name: Collect Test Results
       run: |
         echo "Build Verification Test ${{ github.event.inputs.hpccVersion }}"  > ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
+        echo "Current tests include 1) All playground samples 2) Regress Setup "  > ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
+        echo ""  >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
         cat ${{ github.workspace }}/test/playground/playground.out >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
         echo ""  >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
         echo ""  >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
