@@ -27,6 +27,11 @@ jobs:
       AKS_NAME: tf-zyln-default-aks-1
       #AZ_RESOURCE_GROUP: ming-rg-github-action-test
       #AKS_NAME: ming-aks-github-action-test
+      AZURE_CREDENTIALS:  "${{ secrets.ADD_AZURE_CREDENTIALS }}"
+      SUBSCRIPTION_ID: "${{ secrets.AAD_SUBSCRIPTION_ID }}"
+      TENANT_ID:  "${{ secrets.AAD_TENANT_ID }}"
+      CLIENT_ID: "${{ secrets.AAD_CLIENT_ID }}"
+      CLIENT_SECRET: "${{ secrets.AAD_CLIENT_SECRET }}"
       HELM_STORAGE_APP_NAME: azstorage
       HELM_HPCC_CLUSTER_NAME: ghhpcccluster
       HPCC_STORAGE_OUTPUT: hpcc_storage_output.txt
@@ -51,15 +56,11 @@ jobs:
 
     - name: 'Az CLI Login with Service Principal'
       #run: |
-      #  az login --service-principal -u ${{ secrets.AAD_CLIENT_ID }} -p ${{ secrets.AAD_CLIENT_SECRET }} --tenant ${{ secrets.AAD_TENANT_ID }} 
-      #  az account set --subscription ${{ secrets.AAD_SUBSCRIPTION_ID }}
+      #  az login --service-principal -u ${{ env.CLIENT_ID }} -p ${{ env.CLIENT_SECRET }} --tenant ${{ env.TENANT_ID }} 
+      #  az account set --subscription ${{ env.SUBSCRIPTION_ID }}
       uses: azure/login@v2
       with:
-      #  client-id: ${{ secrets.ADD_CLIENT_ID }}
-      #  tenant-id: ${{ secrets.ADD_TENANT_ID }}
-      #  subscription-id: ${{ secrets.ADD_SUBSCRIPTION_ID }}
-      #
-        creds: ${{ secrets.ADD_AZURE_CREDENTIALS }}
+        creds: ${{ env.AZURE_CREDENTIALS }}
 
     - name: 'Azure CLI script'
       uses: azure/cli@v2
@@ -82,13 +83,13 @@ jobs:
 
     - name: 'Setup the AKS Environment'
       run: |
-        az account set --subscription ${{ secrets.AAD_SUBSCRIPTION_ID }}
+        az account set --subscription ${{ env.SUBSCRIPTION_ID }}
         az aks get-credentials --name $AKS_NAME --resource-group $AZ_RESOURCE_GROUP --overwrite-existing
 
     - name: 'Kubelogin configuration'
       run: |
         export KUBECONFIG=~/.kube/config
-        kubelogin convert-kubeconfig -l spn --client-id ${{ secrets.AAD_CLIENT_ID }} --client-secret ${{ secrets.AAD_CLIENT_SECRET }}
+        kubelogin convert-kubeconfig -l spn --client-id ${{ env.CLIENT_ID }} --client-secret ${{ env.CLIENT_SECRET }}
 
     - name: 'Start the AKS'
       run: |
@@ -189,10 +190,85 @@ jobs:
           cd /HPCC-Platform/testing/regress 
           ./ecl-test setup --server ${{ env.ECLWATCH_IP }} --config ecl-test-azure.json  2>&1 | tee /test/playground/regress.out
 
+    - name: Parse BVT Result
+      run: |
+        BVT_PLAYGROUND_RESULT_PATH=${{ github.workspace }}/test/playground/playground.out
+        BVT_REGRESS_RESULT_PATH=${{ github.workspace }}/test/playground/regress.out
+
+        playground_total=$(sed -n '/^Summary:/,/Regression Test/{
+          p
+        }' ${BVT_PLAYGROUND_RESULT_PATH} | grep "Total tests" | cut -d':' -f 2 | sed -e 's/^[[:space:]]*//')
+
+        playground_pass=$(sed -n '/^Summary:/,/Regression Test/{
+          p
+        }' ${BVT_PLAYGROUND_RESULT_PATH} | grep "Succeeded" | cut -d':' -f 2 | sed -e 's/^[[:space:]]*//')
+
+        PLAYGROUND_RESULT="${playground_pass}/${playground_total}"
+        echo "Playground test rate: ${PLAYGROUND_RESULT}"
+        echo "PLAYGROUND_RESULT=${PLAYGROUND_RESULT}" >> $GITHUB_ENV
+
+        regress_hthor_pass=$(sed -n '/^[[:space:]]*Result:/,/^[[:space:]]*Log:/{
+          /^[[:space:]]*Result:/ { h; b next }
+          /^[[:space:]]*Log:/ { H; x; /.*setup_hthor.*/p; b next }
+          H
+          :next
+        }' ${BVT_REGRESS_RESULT_PATH} | grep "Passing" | cut -d':' -f 2 | sed -e 's/^[[:space:]]*//')
+
+        regress_hthor_fail=$(sed -n '/^[[:space:]]*Result:/,/^[[:space:]]*Log:/{
+          /^[[:space:]]*Result:/ { h; b next }
+          /^[[:space:]]*Log:/ { H; x; /.*setup_hthor.*/p; b next }
+          H
+          :next
+        }' ${BVT_REGRESS_RESULT_PATH} | grep "Failure:" | cut -d':' -f 2 | sed -e 's/^[[:space:]]*//')
+
+        regress_hthor_total=$(expr $regress_hthor_pass \+ $regress_hthor_fail)
+        echo "regress hthor rate: ${regress_hthor_pass}/${regress_hthor_total}"
+
+        regress_roxie_pass=$(sed -n '/^[[:space:]]*Result:/,/^[[:space:]]*Log:/{
+          /^[[:space:]]*Result:/ { h; b next }
+          /^[[:space:]]*Log:/ { H; x; /.*setup_roxie.*/p; b next }
+          H
+          :next
+        }' ${BVT_REGRESS_RESULT_PATH} | grep "Passing" | cut -d':' -f 2 | sed -e 's/^[[:space:]]*//')
+
+        regress_roxie_fail=$(sed -n '/^[[:space:]]*Result:/,/^[[:space:]]*Log:/{
+          /^[[:space:]]*Result:/ { h; b next }
+          /^[[:space:]]*Log:/ { H; x; /.*setup_roxie.*/p; b next }
+          H
+          :next
+        }' ${BVT_REGRESS_RESULT_PATH} | grep "Failure:" | cut -d':' -f 2 | sed -e 's/^[[:space:]]*//')
+        regress_roxie_total=$(expr $regress_roxie_pass + $regress_roxie_fail)
+        echo "regress roxie rate: ${regress_roxie_pass}/${regress_roxie_total}"
+
+        regress_thor_pass=$(sed -n '/^[[:space:]]*Result:/,/^[[:space:]]*Log:/{
+          /^[[:space:]]*Result:/ { h; b next }
+          /^[[:space:]]*Log:/ { H; x; /.*setup_thor.*/p; b next }
+          H
+          :next
+        }' ${BVT_REGRESS_RESULT_PATH} | grep "Passing" | cut -d':' -f 2 | sed -e 's/^[[:space:]]*//')
+
+        regress_thor_fail=$(sed -n '/^[[:space:]]*Result:/,/^[[:space:]]*Log:/{
+          /^[[:space:]]*Result:/ { h; b next }
+          /^[[:space:]]*Log:/ { H; x; /.*setup_thor.*/p; b next }
+          H
+          :next
+        }' ${BVT_REGRESS_RESULT_PATH} | grep "Failure:" | cut -d':' -f 2 | sed -e 's/^[[:space:]]*//')
+
+        regress_thor_total=$(expr $regress_thor_pass + $regress_thor_fail)
+        echo "regress thor rate: ${regress_thor_pass}/${regress_thor_total}"
+
+        regress_pass=$(expr $regress_hthor_pass + $regress_roxie_pass + $regress_thor_pass)
+        regress_total=$(expr $regress_hthor_total + $regress_roxie_total + $regress_thor_total)
+        export REGRESS_RESULT="${regress_pass}/${regress_total}"
+        echo "regress rate: ${REGRESS_RESULT}"
+        echo "REGRESS_RESULT=${REGRESS_RESULT}" >> $GITHUB_ENV
+
+
     - name: Collect Test Results
       run: |
         echo "Build Verification Test ${{ github.event.inputs.hpccVersion }}"  > ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
-        echo "Current tests include 1) All playground samples 2) Regress Setup "  > ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
+        echo "Summary 1) All playground samples. Success Rate: ${{ env.PLAYGROUND_RESULT }}"  >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
+        echo "        2) Regress Setup. Success Rate: ${{ env.REGRESS_RESULT }}"  >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
         echo ""  >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
         cat ${{ github.workspace }}/test/playground/playground.out >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
         echo ""  >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
@@ -208,6 +284,7 @@ jobs:
         path: |
           ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
         compression-level: 0
+
 
 
     # Will load test result to HPCC-Platform replease
