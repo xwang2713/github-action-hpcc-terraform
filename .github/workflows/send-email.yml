@@ -1,5 +1,8 @@
 name: Send Email
 
+# https://reedelsevier.sharepoint.com/sites/OG-CoP-Cloud/SitePages/8wpjrztv.aspx?web=1&e=5_LyB_BCkU2BsQbCVyk-2g&at=17&OR=Teams-HL&CT=1654889967823&params=eyJBcHBOYW1lIjoiVGVhbXMtRGVza3RvcCIsIkFwcFZlcnNpb24iOiIyNy8yMjA1MDEwMTAwOSJ9
+# https://topdesk.b2b.regn.net/tas/public/ssp/content/serviceflow?unid=650fdab70bad482f878b5b829dec715b
+#
 on:
   workflow_dispatch
 
@@ -38,17 +41,25 @@ jobs:
     - name: Send email
       uses: dawidd6/action-send-mail@v3
       with:
-        server_address: smtp.office365.com
-        #server_address: smtp-mail.outlook.com
+              #server_address: smtp.office365.com
+              #server_address: Apollo.lexisnexisrisk.com
+              #server_port: 25
+        server_address: smtp.gmail.com
+        # port465 for SSL or 587 for TLS
         server_port: 587
-        secure: false
+        #server_port: 465
+        #server_address: smtp-mail.outlook.com
+        #secure: false
         # Optional (recommended) mail server username:
         #username: ${{secrets.MAIL_USERNAME}}
     #    # Optional (recommended) mail server password:
-    #    #password: ${{secrets.MAIL_PASSWORD}}
+        username: ${{ secrets.MAIL_USERNAME }}
+        password: ${{ secrets.MAIL_PASSWORD }}
         subject: Github Actions BVT result
         to: xiaoming.wang@lexisnexisrisk.com
-        from: hpcc-test@hpccsystems.com
+        #to: bryan.cabrera@lexisnexisrisk.com
+        from: hpcctest7@gmail.com
+        #from: xiaoming.wang@lexisnexisrisk.com
         html_body: file://bvt.out
     #    #cc:
     #    #bcc:

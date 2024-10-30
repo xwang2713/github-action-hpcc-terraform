@@ -1,3 +1,25 @@
+#global:
+#  visibilities:
+#    cluster:
+#      type: ClusterIP
+#    local:
+#      annotations:
+#        # This annotation will make azure load balancer use an internal rather than an internet-visible address
+#        # May want different values on different cloud providers or use-cases. For example on AWS you may want to use
+#        #service.beta.kubernetes.io/aws-load-balancer-internal: "true"
+#        service.beta.kubernetes.io/azure-load-balancer-internal: "false"
+#      type: LoadBalancer
+#      # If ingress is specified, an ingress Network Policy will be created for any pod implementing a service with this visibility
+#      # Default allows ingress from anywhere, but more restrictive rules can be used if preferred.
+#      # Ingress rules can also be overridden by individual services
+#      ingress:
+#      - {}
+#    global:
+#      #labels:
+#      #  mylabel: "4"
+#      type: LoadBalancer
+#      ingress:
+#       - {}
 esp:
 - name: eclwatch
   application: eclwatch
@@ -7,6 +29,7 @@ esp:
     port: 8888
     servicePort: 8010
     visibility: global
+    #visibility: local
 - name: eclqueries
   application: eclqueries
   auth: none
