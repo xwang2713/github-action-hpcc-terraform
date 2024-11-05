@@ -2,6 +2,7 @@ name: Send Email
 
 # https://reedelsevier.sharepoint.com/sites/OG-CoP-Cloud/SitePages/8wpjrztv.aspx?web=1&e=5_LyB_BCkU2BsQbCVyk-2g&at=17&OR=Teams-HL&CT=1654889967823&params=eyJBcHBOYW1lIjoiVGVhbXMtRGVza3RvcCIsIkFwcFZlcnNpb24iOiIyNy8yMjA1MDEwMTAwOSJ9
 # https://topdesk.b2b.regn.net/tas/public/ssp/content/serviceflow?unid=650fdab70bad482f878b5b829dec715b
+# After login go to myaccount.google.com/apppasswords to set app password
 #
 on:
   workflow_dispatch
@@ -24,6 +25,7 @@ jobs:
     steps:
     - name: 'Test send email'
       run: |
+        ip addr show
         cat << EOF > bvt.out
         ECL Setup
 
@@ -41,19 +43,21 @@ jobs:
     - name: Send email
       uses: dawidd6/action-send-mail@v3
       with:
-              #server_address: smtp.office365.com
-              #server_address: Apollo.lexisnexisrisk.com
-              #server_port: 25
+        #server_address: smtp.office365.com
+        #server_address: Apollo.lexisnexisrisk.com
+        #server_port: 25
         server_address: smtp.gmail.com
         # port465 for SSL or 587 for TLS
-        server_port: 587
-        #server_port: 465
+        #server_port: 587
+        server_port: 465
         #server_address: smtp-mail.outlook.com
+        #, // Use true for port 465, false for all other ports
+        secure: true
         #secure: false
         # Optional (recommended) mail server username:
         #username: ${{secrets.MAIL_USERNAME}}
     #    # Optional (recommended) mail server password:
-        username: ${{ secrets.MAIL_USERNAME }}
+        username: "hpcctest7@gmail.com"
         password: ${{ secrets.MAIL_PASSWORD }}
         subject: Github Actions BVT result
         to: xiaoming.wang@lexisnexisrisk.com
@@ -61,6 +65,7 @@ jobs:
         from: hpcctest7@gmail.com
         #from: xiaoming.wang@lexisnexisrisk.com
         html_body: file://bvt.out
+        ignore_cert: true
     #    #cc:
     #    #bcc:
     #    ignore_cert: true
