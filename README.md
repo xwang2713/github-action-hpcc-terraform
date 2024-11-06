@@ -87,6 +87,10 @@ Also at AKS side add "<user>=<Service Principal Object ID>"
 Currently two users added: 1) Github App name 2) Github Action runner user: "runner". I think 2) make effect but need to confirm 
 
 
+## Email Notification
+We created hpcc-test@hpccsystems.com shared account. But to enable use it in external network like Github a Topdesk ticket is required for "LN RISK- Appmail Relay". The ip must be fixed which unless we can fix Github Action runner ip it is not possible.
+At temporary work-around we use a gmail account. This account must enable 2-ways authentification and create app password from myaccount.google.com/apppasswords 
+
 ## To Do 
 
 ### Organize the Github Action repo

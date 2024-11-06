@@ -1,4 +1,4 @@
-name: Build Verification Test (BVT) on AKS
+name: Regress on AKS
 
 on:
   workflow_dispatch:
@@ -188,7 +188,21 @@ jobs:
         options: --rm -v ${{ github.workspace }}/HPCC-Platform:/HPCC-Platform -v ${{ github.workspace }}/test:/test
         run: |
           cd /HPCC-Platform/testing/regress 
-          ./ecl-test setup --server ${{ env.ECLWATCH_IP }} --config ecl-test-azure.json  2>&1 | tee /test/playground/regress.out
+          ./ecl-test setup --server ${{ env.ECLWATCH_IP }} --config ecl-test-azure.json --timeout 180 --pq 2  2>&1 | tee /test/playground/regress.out
+          # Full test about 3 hrs 20 min
+          #EXCLUSIONS='--ef pipefail.ecl -e embedded-r,embedded-js,3rdpartyservice,mongodb,spray'
+          #./ecl-test run --server ${{ env.ECLWATCH_IP }} $EXCLUSIONS --config ecl-test-azure.json --timeout 1200 
+          # Quick test
+          EXCLUSIONS='--ef pipefail.ecl -e embedded-r,embedded-js,3rdpartyservice,mongodb,spray'
+          QUICK_TEST_SET='pipe* httpcall* soapcall* roxie* badindex.ecl'
+          ./ecl-test query --server ${{ env.ECLWATCH_IP }} $EXCLUSIONS --config ecl-test-azure.json --timeout 360 --pq 2 $QUICK_TEST_SET
+          cp ~/HPCCSystems-regression/log/hthor.*.log /test/
+          cp ~/HPCCSystems-regression/log/roxie.*.log /test/
+          cp ~/HPCCSystems-regression/log/thor.*.log /test/
+          ls /test/*.log
+          #./ecl-test query --server <ECL_WATHh_IP> $EXCLUSIONS --config ecl-test-azure.json --timeout 1200 [-pq 2] $QUICK_TEST_SET
+
+
 
     - name: Parse BVT Result
       run: |
@@ -267,9 +281,8 @@ jobs:
     - name: Collect Test Results
       run: |
         echo "Build Verification Test ${{ github.event.inputs.hpccVersion }}"  > ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
-        echo "Summary:"  >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
-        echo "  1) All playground samples. Success Rate: ${{ env.PLAYGROUND_RESULT }}"  >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
-        echo "  2) Regress Setup. Success Rate: ${{ env.REGRESS_RESULT }}"  >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
+        echo "Summary 1) All playground samples. Success Rate: ${{ env.PLAYGROUND_RESULT }}"  >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
+        echo "        2) Regress Setup. Success Rate: ${{ env.REGRESS_RESULT }}"  >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
         echo ""  >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
         cat ${{ github.workspace }}/test/playground/playground.out >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
         echo ""  >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
@@ -278,28 +291,28 @@ jobs:
         echo "---------------------------------------------------------"  >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
         cat ${{ github.workspace }}/test/playground/regress.out >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
 
-    - name: Upload Artifacts BVT Test
-      uses: actions/upload-artifact@v4
-      with:
-        name: HPCC-${{ github.event.inputs.hpccVersion }}-BVT-Result
-        path: |
-          ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
-        compression-level: 0
+    #- name: Upload Artifacts BVT Test
+    #  uses: actions/upload-artifact@v4
+    #  with:
+    #    name: HPCC-${{ github.event.inputs.hpccVersion }}-BVT-Result
+    #    path: |
+    #      ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
+    #    compression-level: 0
 
-    - name: Send Email Notification
-      uses: dawidd6/action-send-mail@v3
-      with:
-        server_address: smtp.gmail.com
-        server_port: 465
-        secure: true
-        username: "hpcctest7@gmail.com"
-        password: ${{ secrets.MAIL_PASSWORD }}
-        subject: "BVT ${{ github.event.inputs.hpccVersion }} Playground: ${{ env.PLAYGROUND_RESULT }}, Regress Setup: ${{ env.REGRESS_RESULT }}"
-        to: ${{ secrets.MAIL_TO_LIST }}
-        cc: ${{ secrets.MAIL_CC_LIST }}
-        from: hpcctest7@gmail.com
-        body: file://${{ github.workspace }}/test/${{ env.BVT_RESULT }}
-        ignore_cert: true
+    #- name: Send Email Notification
+    #  uses: dawidd6/action-send-mail@v3
+    #  with:
+    #    server_address: smtp.gmail.com
+    #    server_port: 465
+    #    secure: true
+    #    username: "hpcctest7@gmail.com"
+    #    password: ${{ secrets.MAIL_PASSWORD }}
+    #    subject: "BVT ${{ github.event.inputs.hpccVersion }} Playground: ${{ env.PLAYGROUND_RESULT }}, Regress Setup: ${{ env.REGRESS_RESULT }}"
+    #    to: ${{ secrets.MAIL_TO_LIST }}
+    #    cc: ${{ secrets.MAIL_CC_LIST }}
+    #    from: hpcctest7@gmail.com
+    #    body: file://${{ github.workspace }}/test/${{ env.BVT_RESULT }}
+    #    ignore_cert: true
 
 
     # Will load test result to HPCC-Platform replease
