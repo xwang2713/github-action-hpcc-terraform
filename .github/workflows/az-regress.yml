@@ -290,9 +290,9 @@ jobs:
         echo ""  >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
         echo "Regression Test"  >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
         echo "---------------------------------------------------------"  >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
-        cat ${{ github.workspace }}/test/setup.hthor.*.log | grep -v "URL " >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
-        cat ${{ github.workspace }}/test/setup.roxie-workunit.*.log | grep -v "URL " >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
-        cat ${{ github.workspace }}/test/setup.thor.*.log | grep -v "URL " >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
+        cat ${{ github.workspace }}/test/setup_hthor.*.log | grep -v "URL " >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
+        cat ${{ github.workspace }}/test/setup_roxie-workunit.*.log | grep -v "URL " >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
+        cat ${{ github.workspace }}/test/setup_thor.*.log | grep -v "URL " >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
         cat ${{ github.workspace }}/test/hthor.*.log | grep -v "URL " >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
         cat ${{ github.workspace }}/test/roxie-workunit.*.log | grep -v "URL " >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
         cat ${{ github.workspace }}/test/thor.*.log | grep -v "URL " >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
