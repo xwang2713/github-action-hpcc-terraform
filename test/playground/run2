@@ -1,0 +1,9 @@
+#!/bin/bash
+SCRIPT_DIR=$(dirname $0)
+server=
+[ -n "$1" ] && server=$1
+
+SRC_DIR=/home/hpcc/HPCC-Platform
+[ -n "$2" ] && SRC_DIR=$2
+
+${SCRIPT_DIR}/test-playground.sh -d $SRC_DIR -s $server -t "hthor thor roxie-workunit" | tee ~/tmp/playground.out
