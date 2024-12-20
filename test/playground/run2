@@ -6,4 +6,8 @@ server=
 SRC_DIR=/home/hpcc/HPCC-Platform
 [ -n "$2" ] && SRC_DIR=$2
 
-${SCRIPT_DIR}/test-playground.sh -d $SRC_DIR -s $server -t "hthor thor roxie-workunit" | tee ~/tmp/playground.out
+LOG_DIR=/home/hpcc/tmp
+[ -n "$3" ] && LOG_DIR=$3
+
+echo "${SCRIPT_DIR}/test-playground2.sh -d $SRC_DIR -s $server -t \"hthor thor roxie-workunit\" | tee ${LOG_DIR}/playground.out"
+${SCRIPT_DIR}/test-playground2.sh -d $SRC_DIR -s $server -t "hthor thor roxie-workunit" | tee ${LOG_DIR}/playground.out
