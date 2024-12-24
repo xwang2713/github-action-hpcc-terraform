@@ -19,7 +19,7 @@ print_usage(){
 
 get_value() {
   [ -z "$1" ] && echo "0" &&  return
-  grep $2 $1 | cut -d':' -f 2 |  sed -e 's/^[[:space:]]*//'
+  grep "$2" $1 | cut -d':' -f 2 |  sed -e 's/^[[:space:]]*//'
 }
 
 parse_playground_log() {
@@ -64,8 +64,8 @@ parse_regress_setup_log() {
 collect_test_results() {
   echo "Build Verification Test ${HPCC_VERSION} " > ${BVT_RESULT}
   echo "Summary:" >> ${BVT_RESULT}
-  #echo "  1) All playground samples. Success Rate: ${PLAYGROUND_RESULT}"  >> ${BVT_RESULT}
-  echo "  2) Regress Setup. Success Rate: ${REGRESS_RESULT}"  >> ${BVT_RESULT}
+  echo "  1) All playground samples. Success Rate: ${PLAYGROUND_RESULT}"  >> ${BVT_RESULT}
+  echo "  2) Regress Setup. Success Rate: ${REGRESS_SETUP_RESULT}"  >> ${BVT_RESULT}
   echo ""  >> ${BVT_RESULT}
   cat ${LOG_DIR}/playground.out >> ${BVT_RESULT}
   echo ""  >> ${BVT_RESULT}
