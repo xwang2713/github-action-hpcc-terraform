@@ -212,7 +212,7 @@ jobs:
         function get_value
         {
           [ -z "$1" ] && echo "0" &&  return
-          grep $2 $1 | cut -d':' -f 2 |  sed -e 's/^[[:space:]]*//'
+          grep "$2" $1 | cut -d':' -f 2 |  sed -e 's/^[[:space:]]*//'
         }
 
         # Playground
