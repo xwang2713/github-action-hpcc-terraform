@@ -61,11 +61,35 @@ parse_regress_setup_log() {
 
 }
 
+parse_regress_quick_log() {
+
+  regress_hthor_pass=$(get_value ${BVT_REGRESS_RESULT_PATH}/hthor.*.log "Passing:")
+  regress_hthor_fail=$(get_value ${BVT_REGRESS_RESULT_PATH}/hthor.*.log "Failure:")
+  regress_hthor_total=$(expr $regress_hthor_pass \+ $regress_hthor_fail)
+  echo "regress quick test hthor rate: ${regress_hthor_pass}/${regress_hthor_total}"
+
+  regress_roxie_pass=$(get_value ${BVT_REGRESS_RESULT_PATH}/roxie-workunit.*.log "Passing:")
+  regress_roxie_fail=$(get_value ${BVT_REGRESS_RESULT_PATH}/roxie-workunit.*.log "Failure:")
+  regress_roxie_total=$(expr $regress_roxie_pass \+ $regress_roxie_fail)
+  echo "regress quick test roxie-workunit rate: ${regress_roxie_pass}/${regress_roxie_total}"
+
+  regress_thor_pass=$(get_value ${BVT_REGRESS_RESULT_PATH}/thor.*.log "Passing:")
+  regress_thor_fail=$(get_value ${BVT_REGRESS_RESULT_PATH}/thor.*.log "Failure:")
+  regress_thor_total=$(expr $regress_thor_pass \+ $regress_thor_fail)
+  echo "regress quick test thor rate: ${regress_thor_pass}/${regress_thor_total}"
+
+  regress_quick_pass=$(expr $regress_hthor_pass + $regress_roxie_pass + $regress_thor_pass)
+  regress_quick_total=$(expr $regress_hthor_total + $regress_roxie_total + $regress_thor_total)
+  export REGRESS_QUICK_RESULT="${regress_setup_pass}/${regress_setup_total}"
+
+}
+
 collect_test_results() {
   echo "Build Verification Test ${HPCC_VERSION} " > ${BVT_RESULT}
   echo "Summary:" >> ${BVT_RESULT}
   echo "  1) All playground samples. Success Rate: ${PLAYGROUND_RESULT}"  >> ${BVT_RESULT}
   echo "  2) Regress Setup. Success Rate: ${REGRESS_SETUP_RESULT}"  >> ${BVT_RESULT}
+  echo "  3) Regress Quick Test. Success Rate: ${REGRESS_QUICK_RESULT}"  >> ${BVT_RESULT}
   echo ""  >> ${BVT_RESULT}
   cat ${LOG_DIR}/playground.out >> ${BVT_RESULT}
   echo ""  >> ${BVT_RESULT}
@@ -75,6 +99,9 @@ collect_test_results() {
   cat ${LOG_DIR}/regress.out | grep -v "URL " >> ${BVT_RESULT}
 }
 
+generate_oneline_summary() {
+  echo "BVT ${HPCC_VERSION} Playground: ${PLAYGROUND_RESULT}, Regress { setup: ${REGRESS_SETUP_RESULT}, quick: ${REGRESS_QUICK_RESULT}}" > ${BVT_ONELINE_SUMMARY}
+}
 
 get_hpcc_version() {
   if [ -z "$HPCC_VERSION" ]
@@ -109,8 +136,11 @@ while true ; do
 done
 
 BVT_PLAYGROUND_RESULT_PATH=${LOG_DIR}/playground.out
+rm -rf ${BVT_PLAYGROUND_RESULT_PATH}
 BVT_REGRESS_RESULT_PATH=/home/hpcc/HPCCSystems-regression/log
+rm -rf ${BVT_REGRESS_RESULT_PATH}/*
 BVT_RESULT=${LOG_DIR}/bvt.result
+BVT_ONELINE_SUMMARY=${LOG_DIR}/bvt.summary
 
 get_hpcc_version
 # Build Verification Test 
@@ -121,14 +151,24 @@ echo "./run2 $SERVER ${SRC_DIR} ${LOG_DIR}"
 ./run2 $SERVER ${SRC_DIR} ${LOG_DIR}
 parse_playground_log
 
+REGRESS_CONFIG="--config  ecl-test-azure.json"
+#It seems even local need this config, at least for DD
+#[ "${CLOUD}" = "local" ] && REGRESS_CONFIG=""
+TIMEOUT=120
+
 # Regress Setup
-REGRESS_SETUP_CONFIG="--config  ecl-test-azure.json"
-[ "${CLOUD}" = "local" ] && REGRESS_SETUP_CONFIG=""
-TIMEOUT=60
 cd ${SRC_DIR}/testing/regress
-echo "./ecl-test setup --server ${SERVER} ${REGRESS_SETUP_CONFIG} --timeout $TIMEOUT 2>&1 | tee ${LOG_DIR}/regress.out"
-./ecl-test setup --server ${SERVER} ${REGRESS_SETUP_CONFIG} --timeout $TIMEOUT 2>&1 | tee ${LOG_DIR}/regress.out i
+echo "./ecl-test setup --server ${SERVER} ${REGRESS_CONFIG} --timeout $TIMEOUT 2>&1 | tee ${LOG_DIR}/regress.out"
+./ecl-test setup --server ${SERVER} ${REGRESS_CONFIG} --timeout $TIMEOUT 2>&1 | tee ${LOG_DIR}/regress.out i
 parse_regress_setup_log
+
+
+# Regress Setup
+EXCLUSIONS='--ef pipefail.ecl -e embedded-r,embedded-js,3rdpartyservice,mongodb,spray'
+QUICK_TEST_SET='pipe* httpcall* soapcall* roxie* badindex.ecl'
+./ecl-test query --server ${SERVER} $EXCLUSIONS --config ${REGRESS_CONFIG} --timeout $TIMEOUT --pq 2 $QUICK_TEST_SET
+parse_regress_quick_log
+
 
 # Generate report
 collect_test_results
