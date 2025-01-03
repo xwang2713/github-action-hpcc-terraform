@@ -172,3 +172,4 @@ parse_regress_quick_log
 
 # Generate report
 collect_test_results
+generate_oneline_summary
