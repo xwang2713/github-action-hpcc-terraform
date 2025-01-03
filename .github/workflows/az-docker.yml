@@ -168,8 +168,15 @@ jobs:
    #   run: |
 
 
-   # - name: Collect Test Results
-   #   run: |
+    - name: Display Test Results
+      run: |
+        ls -l ${{ github.workspace }}/test/*
+        #echo "BVT summary:"
+        #cat ${{ github.workspace }}/test/bvt.summary
+        #echo ""
+        #echo "BVT Detail:"
+        #cat ${{ github.workspace }}/test/bvt.result
+
 
     #- name: Upload Artifacts BVT Test
     #  uses: actions/upload-artifact@v4
