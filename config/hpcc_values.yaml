@@ -1,25 +1,25 @@
 eclagent:
 - name: hthor
+  #keepJobs: all
   ## replicas indicates how many eclagent pods should be started
-  replicas: 1
+  replicas: 3
   ## maxActive controls how many workunits may be active at once (per replica)
   maxActive: 4
   ## prefix may be used to set a filename prefix applied to any relative filenames used by jobs submitted to this queue
   prefix: hthor
   ## Set to false if you want to launch each workunit in its own container, true to run as child processes in eclagent pod
-  useChildProcesses: false
+  useChildProcesses: true
   ## type may be 'hthor' (the default) or 'roxie', to specify that the roxie engine rather than the hthor engine should be used for eclagent workunit processing
   type: hthor
   ## The following resources apply to child hThor pods when useChildProcesses=false, otherwise they apply to hThor pod.
   #resources:
   #  cpu: "1"
   #  memory: "1G"
-  #egress: engineEgress
-
-  allowedPipePrograms:
+  allowedPipePrograms: 
   - "*"
 
 - name: roxie-workunit
+  #keepJobs: all
   replicas: 1
   prefix: roxie_workunit
   maxActive: 20
@@ -28,35 +28,29 @@ eclagent:
   #resources:
   #  cpu: "1"
   #  memory: "1G"
-  #egress: engineEgress
-  #
   allowedPipePrograms:
-  - "*"
+   - "*"
+
 
 thor:
 - name: thor
-  #hold: true # (for developers, can be used on any component). Component will enter a hold loop at config load time.
-  #holdSlave: 0 # (for developers). Similar to hold, but 0 = master, 1-N = worker #.
-  #holdAgent: true # (for developers). Similar to hold, but for this Thor's eclagent.
-  #holdThorAgent: true # (for developers). Similar to hold, but for this Thor's thoragent.
+  #keepJobs: all
   prefix: thor
   numWorkers: 2
   maxJobs: 4
   maxGraphs: 2
-  #maxGraphStartupTime: 600
-  #numWorkersPerPod: 1
   #managerResources:
   #  cpu: "1"
   #  memory: "2G"
   #workerResources:
   #  cpu: "4"
   #  memory: "4G"
-  #workerMemory:
-  #  query: "3G"
-  #  thirdParty: "500M"
   #eclAgentResources:
   #  cpu: "1"
   #  memory: "2G"
-  #egress: engineEgress
+  multiJobLinger: true
+  lingerPeriod: 200
+  logging:
+    detail: 100
   allowedPipePrograms:
-  - "*"
+   - "*"
