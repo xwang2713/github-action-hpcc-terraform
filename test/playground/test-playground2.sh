@@ -6,7 +6,7 @@ usage()
   echo "    -h     Display help"
   echo "    -d     HPCC-Platform source directory path"
   echo "    -s     EclWatch ip or FQDN"
-  echo "    -t     targets. Such as 'hthor roxie thor'"
+  echo "    -t     targets. Such as 'hthor roxie-workunit thor'"
   exit
 }
 
