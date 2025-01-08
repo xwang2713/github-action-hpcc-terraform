@@ -162,7 +162,7 @@ jobs:
     - name: Run BVT
       uses: addnab/docker-run-action@v3
       with:
-        image: xwang2713/platform-test:${{ github.event.inputs.hpccVersion }}
+        image: hpccsystems/platform-test:${{ github.event.inputs.hpccVersion }}
         options: --rm -v ${{ github.workspace }}/test:/test 
         run: |
           /home/hpcc/test/BVT/bvt.sh -s ${{ env.ECLWATCH_IP }}  -l /test
