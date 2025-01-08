@@ -80,7 +80,7 @@ parse_regress_quick_log() {
 
   regress_quick_pass=$(expr $regress_hthor_pass + $regress_roxie_pass + $regress_thor_pass)
   regress_quick_total=$(expr $regress_hthor_total + $regress_roxie_total + $regress_thor_total)
-  export REGRESS_QUICK_RESULT="${regress_setup_pass}/${regress_setup_total}"
+  export REGRESS_QUICK_RESULT="${regress_quick_pass}/${regress_quick_total}"
 
 }
 
@@ -100,7 +100,7 @@ collect_test_results() {
 }
 
 generate_oneline_summary() {
-  echo "BVT ${HPCC_VERSION} Playground: ${PLAYGROUND_RESULT}, Regress { setup: ${REGRESS_SETUP_RESULT}, quick: ${REGRESS_QUICK_RESULT}}" > ${BVT_ONELINE_SUMMARY}
+  echo "BVT ${HPCC_VERSION} Playground: ${PLAYGROUND_RESULT}, Regress { setup: ${REGRESS_SETUP_RESULT}, quick: ${REGRESS_QUICK_RESULT} }" > ${BVT_ONELINE_SUMMARY}
 }
 
 get_hpcc_version() {
@@ -162,8 +162,13 @@ echo "./ecl-test setup --server ${SERVER} ${REGRESS_CONFIG} --timeout $TIMEOUT 2
 ./ecl-test setup --server ${SERVER} ${REGRESS_CONFIG} --timeout $TIMEOUT 2>&1 | tee ${LOG_DIR}/regress.out
 parse_regress_setup_log
 
-# Publish roxie
-ecl publish -t roxie --server ${SERVER} ecl/setup/soapbase.ecl
+# Publish roxie files for Quick Test
+ecl publish -t roxie --server ${SERVER} ecl/setup/soapbase.ecl >/dev/null 2>&1
+ecl publish -t roxie --server ${SERVER} ecl/setup/roxie_echo.ecl >/dev/null 2>&1
+ecl publish -t roxie --server ${SERVER} ecl/setup/roxie_keepwhitespace.ecl >/dev/null 2>&1
+# Will not run following ECL file
+FILE_TO_SKIP="ecl/badindex.ecl"
+[ -e ${FILE_TO_SKIP} ] && rm -rf ${FILE_TO_SKIP}
 
 # Regress Setup
 EXCLUSIONS='--ef pipefail.ecl -e embedded-r,embedded-js,3rdpartyservice,mongodb,spray'
