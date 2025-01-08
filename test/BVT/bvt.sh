@@ -153,15 +153,17 @@ parse_playground_log
 
 REGRESS_CONFIG="--config  ecl-test-azure.json"
 #It seems even local need this config, at least for DD
-#[ "${CLOUD}" = "local" ] && REGRESS_CONFIG=""
+[ "${CLOUD}" = "no" ] && REGRESS_CONFIG=""
 TIMEOUT=120
 
 # Regress Setup
 cd ${SRC_DIR}/testing/regress
 echo "./ecl-test setup --server ${SERVER} ${REGRESS_CONFIG} --timeout $TIMEOUT 2>&1 | tee ${LOG_DIR}/regress.out"
-./ecl-test setup --server ${SERVER} ${REGRESS_CONFIG} --timeout $TIMEOUT 2>&1 | tee ${LOG_DIR}/regress.out i
+./ecl-test setup --server ${SERVER} ${REGRESS_CONFIG} --timeout $TIMEOUT 2>&1 | tee ${LOG_DIR}/regress.out
 parse_regress_setup_log
 
+# Publish roxie
+ecl publish -t roxie --server ${SERVER} ecl/setup/soapbase.ecl
 
 # Regress Setup
 EXCLUSIONS='--ef pipefail.ecl -e embedded-r,embedded-js,3rdpartyservice,mongodb,spray'
