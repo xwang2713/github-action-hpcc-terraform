@@ -1,0 +1,45 @@
+placements:
+- pods: ["all"]
+  placement:
+    tolerations:
+    - key: "kubernetes.azure.com/scalesetpriority"
+      operator: "Equal"
+      value: "spot"
+      effect: "NoSchedule"
+- pods: ["type:dali"]
+  placement:
+    tolerations:
+    - key: "hpcc"
+      operator: "Equal"
+      value: "dalipool"
+      effect: "NoSchedule"
+    nodeSelector: 
+      workload: "dalipool"
+- pods: ["type:roxie"]
+  placement:
+    tolerations:
+    - key: "hpcc"
+      operator: "Equal"
+      value: "roxiepool"
+      effect: "NoSchedule"
+    - key: "kubernetes.azure.com/scalesetpriority"
+      operator: "Equal"
+      value: "spot"
+      effect: "NoSchedule"
+    nodeSelector:              
+      workload: "roxiepool"
+
+- pods: ["type:dafilesrv"]
+  placement:
+    tolerations:
+    - key: "hpcc"
+      operator: "Equal"
+      value: "spraypool"
+      effect: "NoSchedule"
+    - key: "kubernetes.azure.com/scalesetpriority"
+      operator: "Equal"
+      value: "spot"
+      effect: "NoSchedule"
+    nodeSelector:
+      workload: "spraypool"
+
