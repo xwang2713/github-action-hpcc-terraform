@@ -23,8 +23,8 @@ jobs:
 
     name: "Azure Environemt"
     env:
-      AZ_RESOURCE_GROUP: app-hpcc-platform-dev-eastus-98900
-      AKS_NAME: dev-aks-1
+      AZ_RESOURCE_GROUP: app-hpcc-dev-eastus-24509
+      AKS_NAME: dev-aks-2
       #AZ_RESOURCE_GROUP: app-bctest-sandbox-eastus-61217
       #AKS_NAME: tf-zyln-default-aks-1
       #AZ_RESOURCE_GROUP: ming-rg-github-action-test
