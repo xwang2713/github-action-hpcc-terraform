@@ -90,7 +90,9 @@ jobs:
 
     - name: 'Setup the AKS Environment'
       run: |
+        echo "az account set --subscription ${{ env.SUBSCRIPTION_ID }}"
         az account set --subscription ${{ env.SUBSCRIPTION_ID }}
+        echo "az aks get-credentials --name $AKS_NAME --resource-group $AZ_RESOURCE_GROUP --overwrite-existing"
         az aks get-credentials --name $AKS_NAME --resource-group $AZ_RESOURCE_GROUP --overwrite-existing
 
     - name: 'Kubelogin configuration'
