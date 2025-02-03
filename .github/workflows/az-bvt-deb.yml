@@ -35,8 +35,10 @@ jobs:
       HELM_STORAGE_APP_NAME: azstorage
       HELM_HPCC_CLUSTER_NAME: ghhpcccluster
       HPCC_STORAGE_OUTPUT: hpcc_storage_output.txt
-      HPCC_STORAGE_INPUT_YAML: hpcc_storage_input.yaml 
+      #HPCC_STORAGE_INPUT_YAML: hpcc_storage_input.yaml 
+      HPCC_STORAGE_INPUT_YAML: values-auto-azurefile.yaml
       HPCC_ESP_CONFIG: hpcc_esp_config.yaml
+      HPCC_VALUES_CONFIG: hpcc_values.yaml
       #HPCC_VERSION: 9.8.18
       #HPCC_SRC_BRANCH: community_9.8.18-1
       #HPCC_SRC_ACCOUNT: hpcc-systems
