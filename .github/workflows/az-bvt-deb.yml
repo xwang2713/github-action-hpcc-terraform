@@ -278,11 +278,11 @@ jobs:
         #   echo "  2) Regress Setup. Success Rate: ${{ env.REGRESS_RESULT }}"  >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
         echo ""  >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
         cat ${{ github.workspace }}/test/playground/playground.out >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
-        echo ""  >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
-        echo ""  >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
+        #echo ""  >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
+        #echo ""  >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
         #echo "Regression Test"  >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
-        echo "---------------------------------------------------------"  >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
-        cat ${{ github.workspace }}/test/playground/regress.out | grep -v "URL " >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
+        #echo "---------------------------------------------------------"  >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
+        #cat ${{ github.workspace }}/test/playground/regress.out | grep -v "URL " >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
 
 
     # Will load test result to HPCC-Platform replease
