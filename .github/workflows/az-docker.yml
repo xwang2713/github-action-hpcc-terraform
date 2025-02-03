@@ -117,7 +117,7 @@ jobs:
         if [ $? -eq 0 ]
         then
            helm uninstall $HELM_HPCC_CLUSTER_NAME
-           helm uninstall $HELM_STORAGE_APP_NAME
+           #helm uninstall $HELM_STORAGE_APP_NAME
            #kubectl delete pvc --all
            #kubectl delete pv --all
            sleep 120
