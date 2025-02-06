@@ -43,15 +43,18 @@ HPCC Platform source branch
 ```
 
 The current steps include:
-1. Azure login
-2. Start AKS
-3. Clean previous HPCC Systems storage and cluster
-4. Deploy HPCC Systems storage
-5. Deploy HPCC Systems cluster
-6. Run a simple ECL test with HPCC Platform container
-7. Run ECL Watch Playground test for target "hthor" and "thor". "roxie" is disabled since it doesn't work as HPCC 9.8.18-1
-8. Delete HPCC Systems storage and cluster
-9. Stop AKS
+1.  Azure login
+2.  Start AKS
+3.  Clean previous HPCC Systems storage and cluster
+4.  Deploy HPCC Systems storage
+5.  Deploy HPCC Systems cluster
+6.  Run a simple ECL test with HPCC Platform container
+7.  Run ECL Watch Playground test for target "hthor" and "thor". "roxie" is disabled since it doesn't work as HPCC 9.8.18-1
+8.  RUN Regress Setup Test. In near future Quick Test will be added
+9.  Parsing test result and upload to Github HPCC-Platform release as a file bvt.result
+10. Sent notification email to a list of people in our development team
+11. Delete HPCC Systems storage and cluster
+12. Stop AKS
 
 
 ## How to trigger a workflow
@@ -92,6 +95,12 @@ We created hpcc-test@hpccsystems.com shared account. But to enable use it in ext
 At temporary work-around we use a gmail account. This account must enable 2-ways authentification and create app password from myaccount.google.com/apppasswords 
 
 ## To Do 
+
+### Using Opinionated HPCC cluster in AKS
+Either dev-aks-1 or dev-aks-2
+
+### Adopt this repo to a official GitHub organizaton
+https://github.com/gfortil/opinionated-terraform-azurerm-hpcc 
 
 ### Organize the Github Action repo
 It is currently under Github account xwang2713 (ming)
