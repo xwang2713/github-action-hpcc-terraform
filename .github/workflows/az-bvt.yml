@@ -187,14 +187,14 @@ jobs:
         run: |
           /playground/run ${{ env.ECLWATCH_IP }} /HPCC-Platform
 
-   #- name: Test Regression HPCC Systems Source
-   #   uses: addnab/docker-run-action@v3
-   #   with:
-   #     image: hpccsystems/platform-core:${{ github.event.inputs.hpccVersion }}
-   #     options: --rm -v ${{ github.workspace }}/HPCC-Platform:/HPCC-Platform -v ${{ github.workspace }}/test:/test
-   #     run: |
-   #       cd /HPCC-Platform/testing/regress 
-   #       ./ecl-test setup --server ${{ env.ECLWATCH_IP }} --config ecl-test-azure.json  2>&1 | tee /test/playground/regress.out
+    - name: Test Regression HPCC Systems Source
+      uses: addnab/docker-run-action@v3
+      with:
+        image: hpccsystems/platform-core:${{ github.event.inputs.hpccVersion }}
+        options: --rm -v ${{ github.workspace }}/HPCC-Platform:/HPCC-Platform -v ${{ github.workspace }}/test:/test
+        run: |
+          cd /HPCC-Platform/testing/regress 
+          ./ecl-test setup --server ${{ env.ECLWATCH_IP }} --config ecl-test-azure.json  2>&1 | tee /test/playground/regress.out
 
     - name: Parse BVT Result
       run: |
@@ -213,61 +213,61 @@ jobs:
         echo "Playground test rate: ${PLAYGROUND_RESULT}"
         echo "PLAYGROUND_RESULT=${PLAYGROUND_RESULT}" >> $GITHUB_ENV
 
-     # regress_hthor_pass=$(sed -n '/^[[:space:]]*Result:/,/^[[:space:]]*Log:/{
-     #     /^[[:space:]]*Result:/ { h; b next }
-     #     /^[[:space:]]*Log:/ { H; x; /.*setup_hthor.*/p; b next }
-     #     H
-     #     :next
-     #   }' ${BVT_REGRESS_RESULT_PATH} | grep "Passing" | cut -d':' -f 2 | sed -e 's/^[[:space:]]*//')
+        regress_hthor_pass=$(sed -n '/^[[:space:]]*Result:/,/^[[:space:]]*Log:/{
+          /^[[:space:]]*Result:/ { h; b next }
+          /^[[:space:]]*Log:/ { H; x; /.*setup_hthor.*/p; b next }
+          H
+          :next
+        }' ${BVT_REGRESS_RESULT_PATH} | grep "Passing" | cut -d':' -f 2 | sed -e 's/^[[:space:]]*//')
 
-     #   regress_hthor_fail=$(sed -n '/^[[:space:]]*Result:/,/^[[:space:]]*Log:/{
-     #     /^[[:space:]]*Result:/ { h; b next }
-     #     /^[[:space:]]*Log:/ { H; x; /.*setup_hthor.*/p; b next }
-     #     H
-     #     :next
-     #   }' ${BVT_REGRESS_RESULT_PATH} | grep "Failure:" | cut -d':' -f 2 | sed -e 's/^[[:space:]]*//')
+        regress_hthor_fail=$(sed -n '/^[[:space:]]*Result:/,/^[[:space:]]*Log:/{
+          /^[[:space:]]*Result:/ { h; b next }
+          /^[[:space:]]*Log:/ { H; x; /.*setup_hthor.*/p; b next }
+          H
+          :next
+        }' ${BVT_REGRESS_RESULT_PATH} | grep "Failure:" | cut -d':' -f 2 | sed -e 's/^[[:space:]]*//')
 
-     #   regress_hthor_total=$(expr $regress_hthor_pass \+ $regress_hthor_fail)
-     #   echo "regress hthor rate: ${regress_hthor_pass}/${regress_hthor_total}"
+        regress_hthor_total=$(expr $regress_hthor_pass \+ $regress_hthor_fail)
+        echo "regress hthor rate: ${regress_hthor_pass}/${regress_hthor_total}"
 
-     #   regress_roxie_pass=$(sed -n '/^[[:space:]]*Result:/,/^[[:space:]]*Log:/{
-     #     /^[[:space:]]*Result:/ { h; b next }
-     #     /^[[:space:]]*Log:/ { H; x; /.*setup_roxie.*/p; b next }
-     #     H
-     #     :next
-     #   }' ${BVT_REGRESS_RESULT_PATH} | grep "Passing" | cut -d':' -f 2 | sed -e 's/^[[:space:]]*//')
+        regress_roxie_pass=$(sed -n '/^[[:space:]]*Result:/,/^[[:space:]]*Log:/{
+          /^[[:space:]]*Result:/ { h; b next }
+          /^[[:space:]]*Log:/ { H; x; /.*setup_roxie.*/p; b next }
+          H
+          :next
+        }' ${BVT_REGRESS_RESULT_PATH} | grep "Passing" | cut -d':' -f 2 | sed -e 's/^[[:space:]]*//')
 
-     #   regress_roxie_fail=$(sed -n '/^[[:space:]]*Result:/,/^[[:space:]]*Log:/{
-     #     /^[[:space:]]*Result:/ { h; b next }
-     #     /^[[:space:]]*Log:/ { H; x; /.*setup_roxie.*/p; b next }
-     #     H
-     #     :next
-     #   }' ${BVT_REGRESS_RESULT_PATH} | grep "Failure:" | cut -d':' -f 2 | sed -e 's/^[[:space:]]*//')
-     #   regress_roxie_total=$(expr $regress_roxie_pass + $regress_roxie_fail)
-     #   echo "regress roxie rate: ${regress_roxie_pass}/${regress_roxie_total}"
+        regress_roxie_fail=$(sed -n '/^[[:space:]]*Result:/,/^[[:space:]]*Log:/{
+          /^[[:space:]]*Result:/ { h; b next }
+          /^[[:space:]]*Log:/ { H; x; /.*setup_roxie.*/p; b next }
+          H
+          :next
+        }' ${BVT_REGRESS_RESULT_PATH} | grep "Failure:" | cut -d':' -f 2 | sed -e 's/^[[:space:]]*//')
+        regress_roxie_total=$(expr $regress_roxie_pass + $regress_roxie_fail)
+        echo "regress roxie rate: ${regress_roxie_pass}/${regress_roxie_total}"
 
-     #   regress_thor_pass=$(sed -n '/^[[:space:]]*Result:/,/^[[:space:]]*Log:/{
-     #     /^[[:space:]]*Result:/ { h; b next }
-     #     /^[[:space:]]*Log:/ { H; x; /.*setup_thor.*/p; b next }
-     #     H
-     #     :next
-     #   }' ${BVT_REGRESS_RESULT_PATH} | grep "Passing" | cut -d':' -f 2 | sed -e 's/^[[:space:]]*//')
+        regress_thor_pass=$(sed -n '/^[[:space:]]*Result:/,/^[[:space:]]*Log:/{
+          /^[[:space:]]*Result:/ { h; b next }
+          /^[[:space:]]*Log:/ { H; x; /.*setup_thor.*/p; b next }
+          H
+          :next
+        }' ${BVT_REGRESS_RESULT_PATH} | grep "Passing" | cut -d':' -f 2 | sed -e 's/^[[:space:]]*//')
 
-     #   regress_thor_fail=$(sed -n '/^[[:space:]]*Result:/,/^[[:space:]]*Log:/{
-     #     /^[[:space:]]*Result:/ { h; b next }
-     #     /^[[:space:]]*Log:/ { H; x; /.*setup_thor.*/p; b next }
-     #     H
-     #     :next
-     #   }' ${BVT_REGRESS_RESULT_PATH} | grep "Failure:" | cut -d':' -f 2 | sed -e 's/^[[:space:]]*//')
+        regress_thor_fail=$(sed -n '/^[[:space:]]*Result:/,/^[[:space:]]*Log:/{
+          /^[[:space:]]*Result:/ { h; b next }
+          /^[[:space:]]*Log:/ { H; x; /.*setup_thor.*/p; b next }
+          H
+          :next
+        }' ${BVT_REGRESS_RESULT_PATH} | grep "Failure:" | cut -d':' -f 2 | sed -e 's/^[[:space:]]*//')
 
-     #   regress_thor_total=$(expr $regress_thor_pass + $regress_thor_fail)
-     #   echo "regress thor rate: ${regress_thor_pass}/${regress_thor_total}"
+        regress_thor_total=$(expr $regress_thor_pass + $regress_thor_fail)
+        echo "regress thor rate: ${regress_thor_pass}/${regress_thor_total}"
 
-     #   regress_pass=$(expr $regress_hthor_pass + $regress_roxie_pass + $regress_thor_pass)
-     #   regress_total=$(expr $regress_hthor_total + $regress_roxie_total + $regress_thor_total)
-     #   export REGRESS_RESULT="${regress_pass}/${regress_total}"
-     #   echo "regress rate: ${REGRESS_RESULT}"
-     #   echo "REGRESS_RESULT=${REGRESS_RESULT}" >> $GITHUB_ENV
+        regress_pass=$(expr $regress_hthor_pass + $regress_roxie_pass + $regress_thor_pass)
+        regress_total=$(expr $regress_hthor_total + $regress_roxie_total + $regress_thor_total)
+        export REGRESS_RESULT="${regress_pass}/${regress_total}"
+        echo "regress rate: ${REGRESS_RESULT}"
+        echo "REGRESS_RESULT=${REGRESS_RESULT}" >> $GITHUB_ENV
 
 
     - name: Collect Test Results
@@ -275,14 +275,14 @@ jobs:
         echo "Build Verification Test ${{ github.event.inputs.hpccVersion }}"  > ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
         echo "Summary:"  >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
         echo "  1) All playground samples. Success Rate: ${{ env.PLAYGROUND_RESULT }}"  >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
-        #   echo "  2) Regress Setup. Success Rate: ${{ env.REGRESS_RESULT }}"  >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
+        echo "  2) Regress Setup. Success Rate: ${{ env.REGRESS_RESULT }}"  >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
         echo ""  >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
         cat ${{ github.workspace }}/test/playground/playground.out >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
-        #echo ""  >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
-        #echo ""  >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
-        #echo "Regression Test"  >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
-        #echo "---------------------------------------------------------"  >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
-        #cat ${{ github.workspace }}/test/playground/regress.out | grep -v "URL " >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
+        echo ""  >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
+        echo ""  >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
+        echo "Regression Test"  >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
+        echo "---------------------------------------------------------"  >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
+        cat ${{ github.workspace }}/test/playground/regress.out | grep -v "URL " >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
 
     - name: Upload Artifacts BVT Test
       uses: actions/upload-artifact@v4
@@ -301,8 +301,8 @@ jobs:
         secure: true
         username: "hpcctest7@gmail.com"
         password: ${{ secrets.MAIL_PASSWORD }}
-        #subject: "BVT ${{ github.event.inputs.hpccVersion }} Playground: ${{ env.PLAYGROUND_RESULT }}, Regress Setup: ${{ env.REGRESS_RESULT }}"
-        subject: "BVT ${{ github.event.inputs.hpccVersion }} Playground: ${{ env.PLAYGROUND_RESULT }}"
+        subject: "BVT ${{ github.event.inputs.hpccVersion }} Playground: ${{ env.PLAYGROUND_RESULT }}, Regress Setup: ${{ env.REGRESS_RESULT }}"
+        #subject: "BVT ${{ github.event.inputs.hpccVersion }} Playground: ${{ env.PLAYGROUND_RESULT }}"
         to: ${{ secrets.MAIL_TO_LIST }}
         cc: ${{ secrets.MAIL_CC_LIST }}
         from: hpcctest7@gmail.com
