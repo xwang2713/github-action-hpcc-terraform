@@ -1,4 +1,4 @@
-name: Build Verification Test (BVT) on AKS Test
+name: Build Verification Test (BVT) on AKS
 
 on:
   workflow_dispatch:
@@ -23,27 +23,22 @@ jobs:
 
     name: "Azure Environemt"
     env:
-      AZ_RESOURCE_GROUP: app-hpcc-dev-eastus-24509
-      AKS_NAME: dev-aks-2
-      #AZ_RESOURCE_GROUP: app-bctest-sandbox-eastus-61217
-      #AKS_NAME: tf-zyln-default-aks-1
+      AZ_RESOURCE_GROUP: app-bctest-sandbox-eastus-61217
+      AKS_NAME: tf-zyln-default-aks-1
       #AZ_RESOURCE_GROUP: ming-rg-github-action-test
       #AKS_NAME: ming-aks-github-action-test
-      #AZURE_CREDENTIALS:  "${{ secrets.ADD_AZURE_CREDENTIALS }}"
-      #SUBSCRIPTION_ID: "${{ secrets.AAD_SUBSCRIPTION_ID }}"
-      #TENANT_ID:  "${{ secrets.AAD_TENANT_ID }}"
-      #CLIENT_ID: "${{ secrets.AAD_CLIENT_ID }}"
-      #CLIENT_SECRET: "${{ secrets.AAD_CLIENT_SECRET }}"
-      AZURE_CREDENTIALS:  "${{ secrets.LNSP_AZURE_CREDENTIALS }}"
-      SUBSCRIPTION_ID: "${{ secrets.LNSP_SUBSCRIPTION_ID }}"
-      TENANT_ID:  "${{ secrets.LNSP_TENANT_ID }}"
-      CLIENT_ID: "${{ secrets.LNSP_CLIENT_ID }}"
-      CLIENT_SECRET: "${{ secrets.LNSP_CLIENT_SECRET }}"
+      AZURE_CREDENTIALS:  "${{ secrets.ADD_AZURE_CREDENTIALS }}"
+      SUBSCRIPTION_ID: "${{ secrets.AAD_SUBSCRIPTION_ID }}"
+      TENANT_ID:  "${{ secrets.AAD_TENANT_ID }}"
+      CLIENT_ID: "${{ secrets.AAD_CLIENT_ID }}"
+      CLIENT_SECRET: "${{ secrets.AAD_CLIENT_SECRET }}"
       HELM_STORAGE_APP_NAME: azstorage
       HELM_HPCC_CLUSTER_NAME: ghhpcccluster
       HPCC_STORAGE_OUTPUT: hpcc_storage_output.txt
       HPCC_STORAGE_INPUT_YAML: hpcc_storage_input.yaml 
       HPCC_ESP_CONFIG: hpcc_esp_config.yaml
+      HPCC_STORAGE_AUTO: values-auto-azurefile.yaml
+      HPCC_VALUES_CONFIG: hpcc_values.yaml
       #HPCC_VERSION: 9.8.18
       #HPCC_SRC_BRANCH: community_9.8.18-1
       #HPCC_SRC_ACCOUNT: hpcc-systems
@@ -90,9 +85,7 @@ jobs:
 
     - name: 'Setup the AKS Environment'
       run: |
-        echo "az account set --subscription ${{ env.SUBSCRIPTION_ID }}"
         az account set --subscription ${{ env.SUBSCRIPTION_ID }}
-        echo "az aks get-credentials --name $AKS_NAME --resource-group $AZ_RESOURCE_GROUP --overwrite-existing"
         az aks get-credentials --name $AKS_NAME --resource-group $AZ_RESOURCE_GROUP --overwrite-existing
 
     - name: 'Kubelogin configuration'
@@ -124,7 +117,7 @@ jobs:
         if [ $? -eq 0 ]
         then
            helm uninstall $HELM_HPCC_CLUSTER_NAME
-           helm uninstall $HELM_STORAGE_APP_NAME
+           #helm uninstall $HELM_STORAGE_APP_NAME
            #kubectl delete pvc --all
            #kubectl delete pv --all
            sleep 120
@@ -133,20 +126,24 @@ jobs:
         fi
 
 
-    - name: 'Install HPCC Platform Storage'
-      run: |
-        helm install $HELM_STORAGE_APP_NAME hpcc/hpcc-azurefile > $HPCC_STORAGE_OUTPUT 
-        echo "storage:" > $HPCC_STORAGE_INPUT_YAML
-        cat $HPCC_STORAGE_OUTPUT | sed '1,/^storage:/d' >> $HPCC_STORAGE_INPUT_YAML
-        kubectl get pv
-        kubectl get pvc
+   #- name: 'Install HPCC Platform Storage'
+   #   run: |
+   #     helm install $HELM_STORAGE_APP_NAME hpcc/hpcc-azurefile > $HPCC_STORAGE_OUTPUT 
+   #     echo "storage:" > $HPCC_STORAGE_INPUT_YAML
+   #     cat $HPCC_STORAGE_OUTPUT | sed '1,/^storage:/d' >> $HPCC_STORAGE_INPUT_YAML
+   #     kubectl get pv
+   #     kubectl get pvc
      
 
     - name: 'Install HPCC Platform Cluster'
       run: |
         set +e
         echo "Deploy HPCC Platform Cluster" 
-        helm install $HELM_HPCC_CLUSTER_NAME hpcc/hpcc --version=${{ github.event.inputs.hpccVersion }} -f ${{ github.workspace }}/config/$HPCC_ESP_CONFIG -f ./$HPCC_STORAGE_INPUT_YAML
+         helm install $HELM_HPCC_CLUSTER_NAME hpcc/hpcc --version=${{ github.event.inputs.hpccVersion }} \
+          -f ${{ github.workspace }}/config/$HPCC_ESP_CONFIG  \
+          -f ${{ github.workspace }}/config/$HPCC_STORAGE_AUTO  \
+          -f ${{ github.workspace }}/config/$HPCC_VALUES_CONFIG
+          #helm install $HELM_HPCC_CLUSTER_NAME hpcc/hpcc --version=${{ github.event.inputs.hpccVersion }} -f ${{ github.workspace }}/config/$HPCC_ESP_CONFIG -f ./$HPCC_STORAGE_INPUT_YAML
         kubectl wait --for=condition=ready --timeout=1200s pod --all
         set -e
         kubectl get pod 
@@ -276,15 +273,16 @@ jobs:
     - name: Collect Test Results
       run: |
         echo "Build Verification Test ${{ github.event.inputs.hpccVersion }}"  > ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
-        echo "Summary 1) All playground samples. Success Rate: ${{ env.PLAYGROUND_RESULT }}"  >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
-        echo "        2) Regress Setup. Success Rate: ${{ env.REGRESS_RESULT }}"  >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
+        echo "Summary:"  >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
+        echo "  1) All playground samples. Success Rate: ${{ env.PLAYGROUND_RESULT }}"  >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
+           echo "  2) Regress Setup. Success Rate: ${{ env.REGRESS_RESULT }}"  >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
         echo ""  >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
         cat ${{ github.workspace }}/test/playground/playground.out >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
         echo ""  >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
         echo ""  >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
         echo "Regression Test"  >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
         echo "---------------------------------------------------------"  >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
-        cat ${{ github.workspace }}/test/playground/regress.out >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
+        cat ${{ github.workspace }}/test/playground/regress.out | grep -v "URL " >> ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
 
     - name: Upload Artifacts BVT Test
       uses: actions/upload-artifact@v4
@@ -294,30 +292,46 @@ jobs:
           ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
         compression-level: 0
 
+   #- name: Send Email Notification
+   #   continue-on-error: true
+   #   uses: dawidd6/action-send-mail@v3
+   #   with:
+   #     server_address: smtp.gmail.com
+   #     server_port: 465
+   #     secure: true
+   #     username: "hpcctest7@gmail.com"
+   #     password: ${{ secrets.MAIL_PASSWORD }}
+        #subject: "BVT ${{ github.event.inputs.hpccVersion }} Playground: ${{ env.PLAYGROUND_RESULT }}, Regress Setup: ${{ env.REGRESS_RESULT }}"
+    #     subject: "BVT ${{ github.event.inputs.hpccVersion }} Playground: ${{ env.PLAYGROUND_RESULT }}"
+    #    to: ${{ secrets.MAIL_TO_LIST }}
+    #    cc: ${{ secrets.MAIL_CC_LIST }}
+    #    from: hpcctest7@gmail.com
+    #    body: file://${{ github.workspace }}/test/${{ env.BVT_RESULT }}
+    #    ignore_cert: true
 
 
     # Will load test result to HPCC-Platform replease
     # If no release or no tag nothing will happens
     # Ignore errors either no rleease or validation error (code:invalid)
-    - name: "Upload result file to the repo release"
-      continue-on-error: true
-      uses: xresloader/upload-to-github-release@main
-      #env:
-      #  GITHUB_TOKEN: ${{ secrets.MING_GITHUB_TOKEN }}
-      with:
-        file: ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
-        tag_name: ${{ github.event.inputs.hpccSrcBranch }}
-        overwrite: true
-        tags: true
-        target_owner: ${{ github.event.inputs.hpccSrcAccount }}
-        target_repo: HPCC-Platform
-        token: ${{ secrets.MING_GITHUB_TOKEN }}
+    #- name: "Upload result file to the repo release"
+    #  continue-on-error: true
+    #  uses: xresloader/upload-to-github-release@main
+    #  #env:
+    #  #  GITHUB_TOKEN: ${{ secrets.MING_GITHUB_TOKEN }}
+    #  with:
+    #    file: ${{ github.workspace }}/test/${{ env.BVT_RESULT }}
+    #    tag_name: ${{ github.event.inputs.hpccSrcBranch }}
+    #    overwrite: true
+    #    tags: true
+    #    target_owner: ${{ github.event.inputs.hpccSrcAccount }}
+    #    target_repo: HPCC-Platform
+    #    token: ${{ secrets.MING_GITHUB_TOKEN }}
 
     - name: 'Clear HPCC Systems Deployment'
       run: |
         set +e
         helm uninstall $HELM_HPCC_CLUSTER_NAME
-        helm uninstall $HELM_STORAGE_APP_NAME
+        #helm uninstall $HELM_STORAGE_APP_NAME
         #kubectl delete pvc --all
         #kubectl delete pv --all
         sleep 10
