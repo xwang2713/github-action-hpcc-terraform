@@ -34,6 +34,13 @@ storage:
     prefix: "/var/lib/HPCCSystems/mydropzone"
     category: lz
 
+  - name: debug
+    disabled: False
+    storageSize: 1Gi
+    storageClass: "azurefile"
+    prefix: "/var/lib/HPCCSystems/debug"
+    category: debug
+
 sasha:
   wu-archiver:
     plane: sasha
