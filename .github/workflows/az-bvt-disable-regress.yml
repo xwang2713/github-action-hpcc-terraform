@@ -1,4 +1,4 @@
-name: Build Verification Test (BVT) on AKS
+name: Build Verification Test (disable regress) on AKS 
 
 on:
   workflow_dispatch:

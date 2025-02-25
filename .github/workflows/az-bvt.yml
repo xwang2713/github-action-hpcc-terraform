@@ -199,7 +199,7 @@ jobs:
     - name: Parse BVT Result
       run: |
         BVT_PLAYGROUND_RESULT_PATH=${{ github.workspace }}/test/playground/playground.out
-        #BVT_REGRESS_RESULT_PATH=${{ github.workspace }}/test/playground/regress.out
+        BVT_REGRESS_RESULT_PATH=${{ github.workspace }}/test/playground/regress.out
 
         playground_total=$(sed -n '/^Summary:/,/Regression Test/{
           p
@@ -219,6 +219,7 @@ jobs:
           H
           :next
         }' ${BVT_REGRESS_RESULT_PATH} | grep "Passing" | cut -d':' -f 2 | sed -e 's/^[[:space:]]*//')
+        #echo "regress_hthor_pass: ${regress_hthor_pass}"
 
         regress_hthor_fail=$(sed -n '/^[[:space:]]*Result:/,/^[[:space:]]*Log:/{
           /^[[:space:]]*Result:/ { h; b next }
@@ -226,7 +227,9 @@ jobs:
           H
           :next
         }' ${BVT_REGRESS_RESULT_PATH} | grep "Failure:" | cut -d':' -f 2 | sed -e 's/^[[:space:]]*//')
+        #echo "regress_hthor_fail: ${regress_hthor_fail}"
 
+        #echo "regress_hthor_total=$(expr $regress_hthor_pass \+ $regress_hthor_fail)"
         regress_hthor_total=$(expr $regress_hthor_pass \+ $regress_hthor_fail)
         echo "regress hthor rate: ${regress_hthor_pass}/${regress_hthor_total}"
 
