@@ -331,6 +331,7 @@ jobs:
         token: ${{ secrets.MING_GITHUB_TOKEN }}
 
     - name: 'Clear HPCC Systems Deployment'
+      continue-on-error: true
       run: |
         set +e
         helm uninstall $HELM_HPCC_CLUSTER_NAME
@@ -340,5 +341,6 @@ jobs:
         sleep 10
 
     - name: 'Stop the AKS'
+      continue-on-error: true
       run: |
         az aks stop --name $AKS_NAME --resource-group $AZ_RESOURCE_GROUP
