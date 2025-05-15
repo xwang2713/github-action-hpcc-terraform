@@ -12,10 +12,10 @@ jobs:
 
     name: "Upload Result"
     env:
-      GITHUB_ORG: xwang2713
+      GITHUB_ORG: hpcc-systems
       GITHUB_REPO: HPCC-Platform
       RESULT_FILE: test.out
-      RELEASE_REF: github-dev-test-1
+      RELEASE_REF: community_9.12.2-rc1
 
     runs-on: Ubuntu-22.04
     steps:
@@ -25,6 +25,13 @@ jobs:
 
     - name: "Upload result file to the repo release"
       continue-on-error: true
+#      uses: svenstaro/upload-release-action@v2
+#      with:
+#        file: ${{ env.RESULT_FILE }}
+#        asset_name: "BVT.result"
+#        tag: "community_9.12.0-rc1"
+#        overwrite: true
+#        repo_token: ${{ secrets.MING_GITHUB_TOKEN }}
       uses: xresloader/upload-to-github-release@main
       #env:
       #  GITHUB_TOKEN: ${{ secrets.MING_GITHUB_TOKEN }}
