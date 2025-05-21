@@ -44,7 +44,7 @@ jobs:
       #HPCC_SRC_ACCOUNT: hpcc-systems
       BVT_RESULT: BVT.result
 
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     environment: development
 
     steps:
